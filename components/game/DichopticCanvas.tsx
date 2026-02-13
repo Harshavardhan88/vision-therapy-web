@@ -12,36 +12,12 @@ interface DichopticCanvasProps {
     ipd?: number; // Inter-pupillary distance shift (default 0.06)
 }
 
-const StereoRenderer = ({ weakEye, strongEyeOpacity, ipd = 0.06 }: Omit<DichopticCanvasProps, "children">) => {
+const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "children" | "strongEyeOpacity">) => {
     const { gl, scene, camera } = useThree();
 
     // Create two separate cameras for stereo
     const cameraL = useRef(new THREE.PerspectiveCamera(60, 1, 0.1, 100));
     const cameraR = useRef(new THREE.PerspectiveCamera(60, 1, 0.1, 100));
-
-    // Full screen darkening quad for strong eye opacity control
-    const overlayRef = useRef<THREE.Mesh | null>(null);
-    const overlayScene = useRef(new THREE.Scene());
-    const overlayCam = useRef(new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1));
-
-    useEffect(() => {
-        // Setup Overlay for opacity control
-        const plane = new THREE.PlaneGeometry(2, 2);
-        const material = new THREE.MeshBasicMaterial({
-            color: "black",
-            transparent: true,
-            opacity: 0.0
-        });
-        overlayRef.current = new THREE.Mesh(plane, material);
-        overlayScene.current.add(overlayRef.current);
-    }, []);
-
-    useEffect(() => {
-        if (overlayRef.current) {
-            const mat = overlayRef.current.material as THREE.MeshBasicMaterial;
-            mat.opacity = 1.0 - strongEyeOpacity;
-        }
-    }, [strongEyeOpacity]);
 
     useFrame(() => {
         const width = gl.domElement.width;
@@ -68,7 +44,7 @@ const StereoRenderer = ({ weakEye, strongEyeOpacity, ipd = 0.06 }: Omit<Dichopti
         cameraL.current.position.x -= halfIPD;
         cameraR.current.position.x += halfIPD;
 
-        // --- LAYER LOGIC (The Dichoptic Magic) ---
+        // --- LAYER LOGIC ---
         // Layer 0: Background (Visible to BOTH)
         // Layer 1: Targets (Visible ONLY to Weak Eye)
 
@@ -89,22 +65,12 @@ const StereoRenderer = ({ weakEye, strongEyeOpacity, ipd = 0.06 }: Omit<Dichopti
 
         gl.render(scene, cameraL.current);
 
-        // Apply Strong Eye Opacity Overlay if Left is Strong
-        if (weakEye === "right") {
-            gl.render(overlayScene.current, overlayCam.current);
-        }
-
         // --- RENDER RIGHT EYE (width/2 to width) ---
         gl.setViewport(width / 2, 0, width / 2, height);
         gl.setScissor(width / 2, 0, width / 2, height);
         gl.setScissorTest(true);
 
         gl.render(scene, cameraR.current);
-
-        // Apply Strong Eye Opacity Overlay if Right is Strong
-        if (weakEye === "left") {
-            gl.render(overlayScene.current, overlayCam.current);
-        }
 
         gl.setScissorTest(false);
     }, 1); // CRITICAL: Run after default render
@@ -134,8 +100,8 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
                     setHasGyroscope(true);
                     setControlMode('gyro'); // Auto-switch to gyro if detected
-                    setDebugInfo(`Gyro Active! Alpha: ${event.alpha?.toFixed(1)}`);
-                    // We don't remove listener immediately to keep debugging valid
+                    // setDebugInfo(`Gyro Active! Alpha: ${event.alpha?.toFixed(1)}`);
+                    setDebugInfo("Gyro Active!");
                 }
             };
 
@@ -145,7 +111,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 window.removeEventListener('deviceorientation', checkOrientation);
             };
         } else {
-            setDebugInfo("DeviceOrientationEvent NOT supported on this device/browser.");
+            setDebugInfo("DeviceOrientationEvent NOT supported.");
         }
     }, []);
 
@@ -181,7 +147,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                     if (permission === 'granted') {
                         setHasGyroscope(true);
                         setControlMode('gyro');
-                        setDebugInfo("iOS Permission GRANTED! Gyro should work.");
+                        setDebugInfo("iOS Permission GRANTED!");
                     } else {
                         setDebugInfo("iOS Permission DENIED.");
                         console.warn('Device orientation permission denied');
@@ -198,11 +164,15 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
         setIsVR(!isVR);
     };
 
+    // Calculate dimming opacities for CSS overlay
+    const leftOverlayOpacity = weakEye === "right" ? (1.0 - strongEyeOpacity) : 0;
+    const rightOverlayOpacity = weakEye === "left" ? (1.0 - strongEyeOpacity) : 0;
+
     return (
         <div className="w-full h-full relative bg-black">
             <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
                 {children}
-                <StereoRenderer weakEye={weakEye} strongEyeOpacity={strongEyeOpacity} ipd={ipd} />
+                <StereoRenderer weakEye={weakEye} ipd={ipd} />
 
                 {/* Smart Controls: Use gyroscope in VR if selected, otherwise OrbitControls */}
                 {isVR && controlMode === 'gyro' ? (
@@ -217,13 +187,20 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 )}
             </Canvas>
 
+            {/* CSS DIMMING OVERLAYS (More Robust for Mobile) */}
+            {/* Left Eye Dimming */}
+            <div
+                className="absolute top-0 left-0 w-1/2 h-full bg-black pointer-events-none transition-opacity duration-300"
+                style={{ opacity: leftOverlayOpacity }}
+            />
+            {/* Right Eye Dimming */}
+            <div
+                className="absolute top-0 right-0 w-1/2 h-full bg-black pointer-events-none transition-opacity duration-300"
+                style={{ opacity: rightOverlayOpacity }}
+            />
+
             {/* Alignment Line */}
             <div className={`absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/20 -translate-x-1/2 pointer-events-none transition-opacity duration-300 ${isVR ? 'opacity-100' : 'opacity-20'}`} />
-
-            {/* Debug Info Overlay */}
-            <div className="absolute top-4 left-4 z-50 bg-black/50 text-white text-xs p-2 rounded max-w-[200px] pointer-events-none">
-                Debug: {debugInfo}
-            </div>
 
             {/* Control Toggle Button (Top Right) */}
             <button
@@ -232,6 +209,11 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
             >
                 Mode: {controlMode === 'gyro' ? 'GYRO' : 'TOUCH'}
             </button>
+
+            {/* Debug Info */}
+            <div className="absolute top-4 left-4 z-50 bg-black/50 text-white text-xs p-2 rounded max-w-[200px] pointer-events-none">
+                {debugInfo}
+            </div>
 
             {/* VR Toggle Button */}
             <button
