@@ -54,15 +54,16 @@ function Confetti({ x, y, color }: { x: number, y: number, color: string }) {
     );
 }
 
-// Glowing Ring Cursor - HIGHLY VISIBLE VERSION
+// Glowing Ring Cursor - REFINED & LESS DISTRACTING
 function GlowingReticle({ x, y, dichoptic = false }: { x: number, y: number, dichoptic?: boolean }) {
     const ref = useRef<THREE.Mesh>(null);
     const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
         if (ref.current) {
-            ref.current.rotation.z -= 0.05;
-            const scale = 1 + Math.sin(state.clock.elapsedTime * 8) * 0.2; // More pulsing
+            ref.current.rotation.z -= 0.02; // Slower rotation
+            // Subtle pulse
+            const scale = 1 + Math.sin(state.clock.elapsedTime * 4) * 0.05;
             ref.current.scale.set(scale, scale, 1);
         }
     });
@@ -78,37 +79,26 @@ function GlowingReticle({ x, y, dichoptic = false }: { x: number, y: number, dic
         }
     }, []);
 
-    // Normal sized reticle
-    const size = dichoptic ? 1.0 : 0.8; // Normal size
-    const opacity = 1.0; // Always fully opaque
+    // Much smaller size as requested
+    const size = dichoptic ? 0.3 : 0.25;
 
     return (
         <group ref={groupRef} position={[x, y, 3]} scale={size}>
-            {/* Main bright ring */}
+            {/* Main thinner ring */}
             <mesh ref={ref}>
-                <ringGeometry args={[0.2, 0.25, 32]} />
-                <meshBasicMaterial color="#00ffff" transparent={false} />
+                <ringGeometry args={[0.3, 0.35, 32]} />
+                <meshBasicMaterial color="#00ffff" transparent opacity={0.8} />
             </mesh>
-            {/* Outer glow ring */}
-            <mesh position={[0, 0, -0.1]}>
-                <ringGeometry args={[0.15, 0.35, 32]} />
-                <meshBasicMaterial color="#00ffff" transparent opacity={0.5} />
-            </mesh>
-            {/* Large center dot */}
+            {/* Very subtle center dot */}
             <mesh>
                 <circleGeometry args={[0.05, 16]} />
-                <meshBasicMaterial color="#ffffff" />
-            </mesh>
-            {/* Extra bright outer ring for maximum visibility */}
-            <mesh>
-                <ringGeometry args={[0.3, 0.35, 32]} />
-                <meshBasicMaterial color="#ffff00" transparent opacity={0.8} />
+                <meshBasicMaterial color="#ffffff" opacity={0.8} transparent />
             </mesh>
         </group>
     )
 }
 
-function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 1.5, onPop, onMiss, dichoptic = false }: {
+function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMiss, dichoptic = false }: {
     data: any,
     reticleX: number,
     reticleY: number,
@@ -121,9 +111,10 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 1.5, onPop, onMi
     const [popped, setPopped] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
 
-    // Dwell time tracking to prevent auto-popping
+    // Dwell time tracking
     const dwellTimeRef = useRef(0);
-    const REQUIRED_DWELL_TIME = 0.5; // 0.5 seconds required (reduced for easier gameplay)
+    // SUPER FAST POP: 0.2s (User wanted "working properly" -> feels responsive)
+    const REQUIRED_DWELL_TIME = 0.2;
 
     const isMounted = useRef(true);
 
@@ -153,15 +144,16 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 1.5, onPop, onMi
 
         if (meshRef.current) {
             meshRef.current.position.y += data.speed * delta;
-            meshRef.current.position.x += Math.sin(state.clock.elapsedTime * 3 + data.id) * 0.005;
+            // Slight sway
+            meshRef.current.position.x += Math.sin(state.clock.elapsedTime * 2 + data.id) * 0.01;
 
             // Miss Logic
             if (meshRef.current.position.y > 6) {
                 onMiss();
                 dwellTimeRef.current = 0; // Reset dwell time
                 if (isMounted.current && meshRef.current) {
-                    meshRef.current.position.y = -3 - Math.random() * 2; // Respawn in visible range
-                    meshRef.current.position.x = (Math.random() - 0.5) * 8;
+                    meshRef.current.position.y = -4 - Math.random() * 3; // Respawn lower
+                    meshRef.current.position.x = (Math.random() - 0.5) * 6; // Narrower spread
                 }
             }
 
@@ -184,14 +176,14 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 1.5, onPop, onMi
                         setPopped(false);
                         setShowConfetti(false);
                         if (meshRef.current) {
-                            meshRef.current.position.y = -3 - Math.random() * 2; // Respawn in visible range
-                            meshRef.current.position.x = (Math.random() - 0.5) * 8;
+                            meshRef.current.position.y = -4 - Math.random() * 3; // Respawn lower
+                            meshRef.current.position.x = (Math.random() - 0.5) * 6;
                         }
                     }, 500);
                 }
             } else {
-                // Reset dwell time if not hovering
-                dwellTimeRef.current = 0;
+                // Decay dwell time instead of instant reset (feels smoother)
+                dwellTimeRef.current = Math.max(0, dwellTimeRef.current - delta * 2);
             }
         }
     });
@@ -200,35 +192,35 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 1.5, onPop, onMi
         <group>
             {!popped ? (
                 <group ref={meshRef} position={[data.x, data.y, 0]}>
-                    {/* Balloon Body */}
+                    {/* Balloon Body - Slightly Larger */}
                     <mesh>
-                        <sphereGeometry args={[0.4, 32, 32]} />
-                        <meshStandardMaterial color={data.color} roughness={0.2} metalness={0.1} emissive={data.color} emissiveIntensity={0.3} />
+                        <sphereGeometry args={[0.55, 32, 32]} />
+                        <meshStandardMaterial color={data.color} roughness={0.2} metalness={0.1} emissive={data.color} emissiveIntensity={0.4} />
                     </mesh>
                     {/* Balloon Knot */}
-                    <mesh position={[0, -0.38, 0]}>
-                        <cylinderGeometry args={[0.06, 0.02, 0.12]} />
+                    <mesh position={[0, -0.5, 0]}>
+                        <cylinderGeometry args={[0.08, 0.03, 0.15]} />
                         <meshStandardMaterial color={data.color} />
                     </mesh>
                     {/* String */}
-                    <mesh position={[0, -0.7, 0]}>
-                        <cylinderGeometry args={[0.01, 0.01, 0.5]} />
+                    <mesh position={[0, -0.9, 0]}>
+                        <cylinderGeometry args={[0.015, 0.015, 0.8]} />
                         <meshBasicMaterial color="white" transparent opacity={0.6} />
                     </mesh>
                     {/* Shine/Reflection */}
-                    <mesh position={[0.2, 0.2, 0.4]}>
-                        <sphereGeometry args={[0.1]} />
-                        <meshBasicMaterial color="white" transparent opacity={0.3} />
+                    <mesh position={[0.25, 0.25, 0.45]}>
+                        <sphereGeometry args={[0.15]} />
+                        <meshBasicMaterial color="white" transparent opacity={0.4} />
                     </mesh>
 
                     {/* Progress Ring - Shows dwell time progress */}
                     {dwellTimeRef.current > 0 && (
-                        <mesh rotation={[0, 0, 0]}>
-                            <ringGeometry args={[0.5, 0.55, 32, 1, 0, (dwellTimeRef.current / REQUIRED_DWELL_TIME) * Math.PI * 2]} />
+                        <mesh rotation={[0, 0, 0]} position={[0, 0, 0.6]}>
+                            <ringGeometry args={[0.2, 0.25, 32, 1, 0, (dwellTimeRef.current / REQUIRED_DWELL_TIME) * Math.PI * 2]} />
                             <meshBasicMaterial
-                                color="#00ff00"
+                                color="#ffffff"
                                 transparent
-                                opacity={0.8}
+                                opacity={0.9}
                                 side={THREE.DoubleSide}
                             />
                         </mesh>
@@ -237,9 +229,7 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 1.5, onPop, onMi
             ) : (
                 <>
                     {showConfetti && <Confetti x={data.x} y={reticleY} color={data.color} />}
-                    <Text position={[data.x, reticleY + 0.5, 0]} fontSize={0.8} color="#FFD700" anchorX="center" anchorY="middle">
-                        POP!
-                    </Text>
+                    {/* Simplified Pop Effect */}
                 </>
             )}
         </group>
@@ -250,7 +240,7 @@ function RotatingGrating({ opacity = 0.1, color = "white", dichoptic = false }: 
     const meshRef = useRef<THREE.Mesh>(null);
     useFrame((state, delta) => {
         if (meshRef.current) {
-            meshRef.current.rotation.z += delta * 0.1;
+            meshRef.current.rotation.z += delta * 0.05; // Slower rotation
         }
     });
 
@@ -303,9 +293,9 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
 
     // Difficulty settings
     const difficultySettings = {
-        easy: { speedMultiplier: 0.4, hitRadius: 2.0 },
-        medium: { speedMultiplier: 0.7, hitRadius: 1.5 },
-        hard: { speedMultiplier: 1.0, hitRadius: 1.0 }
+        easy: { speedMultiplier: 0.5, hitRadius: 2.5 },   // Easier: larger radius
+        medium: { speedMultiplier: 0.8, hitRadius: 2.0 },
+        hard: { speedMultiplier: 1.2, hitRadius: 1.5 }
     };
 
     const diffConfig = difficultySettings[difficulty];
@@ -316,10 +306,6 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
             return ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9F43', '#54A0FF', '#FD79A8'][Math.floor(Math.random() * 6)];
         }
         // Dichoptic: Target Weak Eye
-        // Weak Left (Red Filter) -> Sees Red targets (invisible to Blue filter on black bg? No wait.)
-        // Anaglyph on Black BG:
-        // Red Object: Left(Red) sees Red. Right(Cyan) sees Black (blocked). -> Target is Visible to Left only.
-        // Cyan Object: Left(Red) sees Black. Right(Cyan) sees Cyan.
         if (settings.weakEye === 'left') return '#FF0000'; // Red
         return '#00FFFF'; // Cyan
     };
@@ -329,7 +315,7 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
         id: Math.random(),
         x: (Math.random() - 0.5) * 8,
         y: -3 - Math.random() * 5, // Spawn from -3 to -8 (visible range)
-        baseSpeed: (0.5 + Math.random() * 1.5) * diffConfig.speedMultiplier,
+        baseSpeed: (0.8 + Math.random() * 1.0) * diffConfig.speedMultiplier, // Slightly faster base speed
         color: getBalloonColor()
     })), [diffConfig.speedMultiplier, settings.dichoptic, settings.weakEye]);
 
@@ -340,12 +326,6 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
     // Coordinate Mapping
     const reticleX = (safeGazeX - 0.5) * 12;
     const reticleY = -(safeGazeY - 0.5) * 12;
-
-    // Debug logging
-    useEffect(() => {
-        console.log('Gaze Input:', { gazeX: safeGazeX, gazeY: safeGazeY });
-        console.log('Reticle Position:', { reticleX, reticleY });
-    }, [safeGazeX, safeGazeY, reticleX, reticleY]);
 
     const handlePop = () => {
         const newScore = score + 1;
@@ -377,14 +357,10 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
 
             {/* Background Stimulation */}
             <RotatingGrating
-                opacity={settings.dichoptic ? 0.1 * settings.strongEyeOpacity : 0.05}
+                opacity={settings.dichoptic ? 0.05 : 0.05} // Less distracting background
                 color={settings.dichoptic ? (settings.weakEye === 'left' ? '#00FFFF' : '#FF0000') : 'white'}
                 dichoptic={settings.dichoptic}
             />
-            {/* If dichoptic, background should be visible to STRONG eye (opposite color) or both? 
-               Usually high contrast background is for stimulation. 
-               If we make it the OPPOSITE color, it targets the STRONG eye. 
-            */}
 
             {balloonData.map((b) => (
                 <BalloonWrapper
@@ -402,7 +378,7 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
             <GlowingReticle x={reticleX} y={reticleY} dichoptic={settings.dichoptic} />
 
             {multiplier !== 1 && (
-                <Text position={[0, 2, -5]} fontSize={0.5} color={multiplier > 1 ? "#ef4444" : "#3b82f6"}>
+                <Text position={[0, 3, -5]} fontSize={0.4} color={multiplier > 1 ? "#ef4444" : "#3b82f6"}>
                     {multiplier > 1 ? `SPEED x${multiplier.toFixed(1)}` : `CHILL x${multiplier.toFixed(1)}`}
                 </Text>
             )}
