@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'export', // Required for Capacitor
-    images: {
-        unoptimized: true, // Required for static export
-    },
+    // output: 'export', // Disabled for Vercel dynamic routing
+    // images: {
+    //     unoptimized: true, // Disabled for Vercel
+    // },
     typescript: {
         ignoreBuildErrors: true,
     },
