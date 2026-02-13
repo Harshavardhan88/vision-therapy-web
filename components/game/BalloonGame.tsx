@@ -98,10 +98,18 @@ function GlowingReticle({ x, y, dichoptic = false }: { x: number, y: number, dic
     )
 }
 
-function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMiss, dichoptic = false }: {
+// Helper to get World Position of a Reticle that is Head-Locked
+function getReticleWorldPosition(camera: THREE.Camera, gazeX: number, gazeY: number): THREE.Vector3 {
+    // Reticle is at (0,0,-3) relative to camera, offset by gaze
+    const vec = new THREE.Vector3((gazeX - 0.5) * 6, -(gazeY - 0.5) * 6, -3);
+    vec.applyMatrix4(camera.matrixWorld);
+    return vec;
+}
+
+function BalloonWrapper({ data, gazeX, gazeY, hitRadius = 2.0, onPop, onMiss, dichoptic = false }: {
     data: any,
-    reticleX: number,
-    reticleY: number,
+    gazeX: number,
+    gazeY: number,
     hitRadius?: number,
     onPop: () => void,
     onMiss: () => void,
@@ -110,10 +118,11 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMi
     const meshRef = useRef<THREE.Group>(null);
     const [popped, setPopped] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const { camera } = useThree();
 
     // Dwell time tracking
     const dwellTimeRef = useRef(0);
-    // SUPER FAST POP: 0.2s (User wanted "working properly" -> feels responsive)
+    // SUPER FAST POP: 0.2s 
     const REQUIRED_DWELL_TIME = 0.2;
 
     const isMounted = useRef(true);
@@ -124,7 +133,7 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMi
         };
     }, []);
 
-    // Set layer for dichoptic rendering - ALWAYS set layers
+    // Set layer for dichoptic rendering
     useEffect(() => {
         if (meshRef.current) {
             meshRef.current.traverse((obj) => {
@@ -157,8 +166,51 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMi
                 }
             }
 
-            // Dwell time collision detection
-            const isHovering = checkCollision(meshRef.current.position.x, meshRef.current.position.y, reticleX, reticleY, hitRadius);
+            // 3D COLLISION DETECTION (Moving Camera support)
+            // 1. Get Reticle World Position
+            const reticlePos = getReticleWorldPosition(camera, gazeX, gazeY);
+
+            // 2. Get Balloon World Position (it's at z=0, so meshRef.current.position is correct usually)
+            // But we should verify distance
+            const balloonPos = meshRef.current.position;
+
+            // 3. Check distance in 3D?
+            // Wait, Reticle is at z=-3 (relative to cam). Balloon is at z=0 (world).
+            // Camera starts at z=5.
+            // If Camera is at z=5, Reticle is at z=2.
+            // Balloon is at z=0.
+            // They don't touch in Z.
+            // So we need Raycast / Angle alignment check.
+
+            // RAYCAST LOGIC SIMULATION:
+            // Is the Balloon "behind" the Reticle from the Camera's perspective?
+
+            // Vector from Camera to Balloon
+            const camToBalloon = new THREE.Vector3().subVectors(balloonPos, camera.position).normalize();
+
+            // Vector from Camera to Reticle
+            const camToReticle = new THREE.Vector3().subVectors(reticlePos, camera.position).normalize();
+
+            // Dot Product -> Angle
+            // If Dot is close to 1, they are aligned.
+            const dot = camToBalloon.dot(camToReticle);
+
+            // Angle in radians = acos(dot)
+            // Threshold?
+            // If hitRadius is large... let's say 5 degrees tolerance.
+            // cos(5 deg) ~ 0.996
+
+            // Hit Radius Logic conversion:
+            // hitRadius 2.0 in world units at distance ~5?
+            // atan(2/5) = ~21 degrees. That's huge. 
+            // Previous logic: checkCollision(bx, by, rx, ry, radius). This ignored Z.
+            // It projected to 2D plane effectively.
+
+            // New Logic: Angle check.
+            const threshold = 0.99 - (hitRadius * 0.005); // Rough approximation tuning
+            // 0.98 is about 11 degrees.
+
+            const isHovering = dot > 0.98; // Liberal hit box
 
             if (isHovering) {
                 // Accumulate dwell time
@@ -182,7 +234,7 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMi
                     }, 500);
                 }
             } else {
-                // Decay dwell time instead of instant reset (feels smoother)
+                // Decay dwell time
                 dwellTimeRef.current = Math.max(0, dwellTimeRef.current - delta * 2);
             }
         }
@@ -228,8 +280,8 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMi
                 </group>
             ) : (
                 <>
-                    {showConfetti && <Confetti x={data.x} y={reticleY} color={data.color} />}
-                    {/* Simplified Pop Effect */}
+                    {/* Confetti Rendered in World Space */}
+                    {showConfetti && <Confetti x={data.x} y={data.y} color={data.color} />}
                 </>
             )}
         </group>
@@ -238,9 +290,17 @@ function BalloonWrapper({ data, reticleX, reticleY, hitRadius = 2.0, onPop, onMi
 
 function RotatingGrating({ opacity = 0.1, color = "white", dichoptic = false }: { opacity?: number, color?: string, dichoptic?: boolean }) {
     const meshRef = useRef<THREE.Mesh>(null);
+    const { camera } = useThree();
+
     useFrame((state, delta) => {
         if (meshRef.current) {
-            meshRef.current.rotation.z += delta * 0.05; // Slower rotation
+            meshRef.current.rotation.z += delta * 0.05;
+
+            // HEAD-LOCK Logic:
+            // Make the background follow the camera position and rotation exactly
+            meshRef.current.position.copy(camera.position);
+            meshRef.current.quaternion.copy(camera.quaternion);
+            meshRef.current.translateZ(-10); // Push back 10 units
         }
     });
 
@@ -272,7 +332,8 @@ function RotatingGrating({ opacity = 0.1, color = "white", dichoptic = false }: 
     }, []);
 
     return (
-        <mesh ref={meshRef} position={[0, 0, -10]} scale={[30, 30, 1]}>
+        <mesh ref={meshRef} scale={[30, 30, 1]}>
+            {/* Position is handled by useFrame now */}
             <planeGeometry />
             <meshBasicMaterial map={texture} transparent opacity={opacity} color={color} blending={THREE.AdditiveBlending} />
         </mesh>
@@ -323,41 +384,30 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
     const safeGazeX = isNaN(gazeX) ? 0.5 : gazeX;
     const safeGazeY = isNaN(gazeY) ? 0.5 : gazeY;
 
+    // RETICLE IS NOW CENTERED (0,0) RELATIVE TO CAMERA?
+    // Wait, if we use Gyro Camera, the "Gaze" is effectively the center of the screen (what user looks at).
+    // Eye Tracker is an offset from center.
+    // If gazeX/Y are 0.5 (center), then reticle is at (0,0).
+    // Balloons are in World Space.
+    // User rotates Camera to overlap Reticle (Center) with Balloon.
+
     // Coordinate Mapping
-    const reticleX = (safeGazeX - 0.5) * 12;
-    const reticleY = -(safeGazeY - 0.5) * 12;
+    // If Gaze is 0.5,0.5 -> Reticle is at 0,0 locally attached to camera?
+    // No, Reticle is rendered in BalloonScene. BalloonScene is WORLD space?
+    // If Reticle is in BalloonScene (World), and Camera moves, Reticle stays in World? No!
+    // Reticle should be HEAD LOCKED (Child of Camera).
+    // But BalloonScene is wrapped in DichopticCanvas...
 
-    const handlePop = () => {
-        const newScore = score + 1;
-        onScore(newScore);
-        setStreak(prev => {
-            const newStreak = prev >= 0 ? prev + 1 : 1;
-            setMultiplier(m => calculateMultiplier(m, newStreak, true));
-            return newStreak;
-        });
-
-        // Play pop sound
-        if (typeof window !== 'undefined') {
-            import('@/lib/audio').then(({ gameAudio }) => gameAudio.playPop());
-        }
-    };
-
-    const handleMiss = () => {
-        setStreak(prev => {
-            const newStreak = prev <= 0 ? prev - 1 : -1;
-            setMultiplier(m => calculateMultiplier(m, newStreak, false));
-            return newStreak;
-        });
-    }
+    // FIX: Make Reticle HEAD LOCKED too!
 
     return (
         <>
             <ambientLight intensity={0.8} />
             <pointLight position={[10, 10, 10]} />
 
-            {/* Background Stimulation */}
+            {/* Background Stimulation - Now Head Locked */}
             <RotatingGrating
-                opacity={settings.dichoptic ? 0.05 : 0.05} // Less distracting background
+                opacity={settings.dichoptic ? 0.05 : 0.05}
                 color={settings.dichoptic ? (settings.weakEye === 'left' ? '#00FFFF' : '#FF0000') : 'white'}
                 dichoptic={settings.dichoptic}
             />
@@ -366,8 +416,14 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
                 <BalloonWrapper
                     key={b.id}
                     data={{ ...b, speed: b.baseSpeed * multiplier, color: settings.dichoptic ? getBalloonColor() : b.color }}
-                    reticleX={reticleX}
-                    reticleY={reticleY}
+                    reticleX={(safeGazeX - 0.5) * 12} // Passed for collision check logic, but actual Reticle Mesh needs to move with camera?
+                    // Actually: checkCollision compares World Coords?
+                    // If Balloon (World) overlaps Reticle (World).
+                    // We need Reticle Position in World Space.
+                    // If Reticle is Head-Locked at (0,0,-3) relative to Camera...
+                    // Then ReticleWorldPos = Camera.position + Camera.forward * 3.
+                    // Collision check needs to account for this.
+                    reticleY={-(safeGazeY - 0.5) * 12}
                     hitRadius={diffConfig.hitRadius}
                     onPop={handlePop}
                     onMiss={handleMiss}
@@ -375,7 +431,8 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
                 />
             ))}
 
-            <GlowingReticle x={reticleX} y={reticleY} dichoptic={settings.dichoptic} />
+            {/* Reticle: Needs to be Head Locked so it stays in center of view as you look around */}
+            <HeadLockedReticle gazeX={safeGazeX} gazeY={safeGazeY} dichoptic={settings.dichoptic} />
 
             {multiplier !== 1 && (
                 <Text position={[0, 3, -5]} fontSize={0.4} color={multiplier > 1 ? "#ef4444" : "#3b82f6"}>
@@ -385,6 +442,48 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
         </>
     );
 }
+
+// Helper for Head Locked Reticle
+function HeadLockedReticle({ gazeX, gazeY, dichoptic }: { gazeX: number, gazeY: number, dichoptic: boolean }) {
+    const { camera } = useThree();
+    const groupRef = useRef<THREE.Group>(null);
+
+    useFrame(() => {
+        if (groupRef.current) {
+            // Follow camera
+            groupRef.current.position.copy(camera.position);
+            groupRef.current.quaternion.copy(camera.quaternion);
+
+            // Offset by Gaze (if Eye Tracker is working, offset from center)
+            // Gaze 0.5,0.5 = Center.
+            const offsetX = (gazeX - 0.5) * 6; // Scale factor
+            const offsetY = -(gazeY - 0.5) * 6;
+
+            groupRef.current.translateX(offsetX);
+            groupRef.current.translateY(offsetY);
+            groupRef.current.translateZ(-3); // Distance
+        }
+    });
+
+    return (
+        <group ref={groupRef}>
+            <GlowingReticle x={0} y={0} dichoptic={dichoptic} />
+        </group>
+    );
+}
+
+// Helper wrapper to update BalloonWrapper to use Camera-relative collision? 
+// Actually, checkCollision logic in BalloonWrapper likely assumes static Reticle X/Y in World Space.
+// If Reticle moves with Camera, we need to pass CURRENT Reticle World Position to BalloonWrapper.
+// But BalloonWrapper runs its own useFrame.
+// We can't easily pass dynamic props without re-render.
+// Better: Pass a Ref to the Reticle? Or keep Reticle X/Y as "Center of Screen" logic for Collision?
+// If Reticle is Center of Screen... raycast from Camera Center?
+// Simplified Collision:
+// Calculate angle between Camera-to-Balloon vector and Camera Forward vector.
+// If angle is small -> Hit.
+
+
 
 export default function BalloonGame({
     gazeX,
@@ -404,25 +503,9 @@ export default function BalloonGame({
     settings?: BalloonGameSettings
 }) {
     const [score, setScore] = useState(0);
-    const [mouseGaze, setMouseGaze] = useState({ x: 0.5, y: 0.5 });
-    const [usingMouse, setUsingMouse] = useState(false);
-
-    // Mouse tracking fallback for VR mode
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            const x = e.clientX / window.innerWidth;
-            const y = e.clientY / window.innerHeight;
-            setMouseGaze({ x, y });
-            setUsingMouse(true);
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
-
-    // Use mouse gaze if eye tracking gives invalid values
-    const effectiveGazeX = (gazeX === 0.5 && gazeY === 0.5 && usingMouse) ? mouseGaze.x : gazeX;
-    const effectiveGazeY = (gazeX === 0.5 && gazeY === 0.5 && usingMouse) ? mouseGaze.y : gazeY;
+    // Simplified BalloonGame wrapper
+    // Now Gaze is only used for Eye Tracking offset (optional)
+    // Gyro is handled by Camera in DichopticCanvas
 
     const handleScore = (newScore: number) => {
         setScore(newScore);
@@ -440,8 +523,8 @@ export default function BalloonGame({
                     <ambientLight intensity={0.8} />
                     <pointLight position={[10, 10, 10]} />
                     <BalloonScene
-                        gazeX={effectiveGazeX}
-                        gazeY={effectiveGazeY}
+                        gazeX={gazeX}
+                        gazeY={gazeY}
                         difficulty={difficulty}
                         score={score}
                         onScore={handleScore}
@@ -449,13 +532,13 @@ export default function BalloonGame({
                     />
                 </DichopticCanvas>
             ) : (
+                // Non-Dichoptic Mode: Standard Canvas
                 <Canvas camera={{ position: [0, 0, 5] }}>
-                    <Sky sunPosition={[100, 20, 100]} />
                     <ambientLight intensity={0.8} />
                     <pointLight position={[10, 10, 10]} />
                     <BalloonScene
-                        gazeX={effectiveGazeX}
-                        gazeY={effectiveGazeY}
+                        gazeX={gazeX}
+                        gazeY={gazeY}
                         difficulty={difficulty}
                         score={score}
                         onScore={handleScore}
