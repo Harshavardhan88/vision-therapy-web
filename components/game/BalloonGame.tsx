@@ -54,7 +54,7 @@ function Confetti({ x, y, color }: { x: number, y: number, color: string }) {
     );
 }
 
-// Glowing Ring Cursor - REFINED & LESS DISTRACTING
+// Glowing Ring Cursor - REFINED & ALWAYS VISIBLE
 function GlowingReticle({ x, y, dichoptic = false }: { x: number, y: number, dichoptic?: boolean }) {
     const ref = useRef<THREE.Mesh>(null);
     const groupRef = useRef<THREE.Group>(null);
@@ -68,31 +68,31 @@ function GlowingReticle({ x, y, dichoptic = false }: { x: number, y: number, dic
         }
     });
 
-    // ALWAYS set layer to 0 (visible to both eyes) - critical for VR visibility
+    // ALWAYS set layer to 0 (visible to both eyes)
     useEffect(() => {
         if (groupRef.current) {
             groupRef.current.traverse((obj) => {
                 if (obj instanceof THREE.Mesh) {
-                    obj.layers.set(0); // Layer 0 = visible to both eyes
+                    obj.layers.set(0);
                 }
             });
         }
     }, []);
 
-    // Much smaller size as requested
-    const size = dichoptic ? 0.3 : 0.25;
+    // Increased size and opacity for visibility
+    const size = dichoptic ? 0.5 : 0.4;
 
     return (
-        <group ref={groupRef} position={[x, y, 3]} scale={size}>
-            {/* Main thinner ring */}
+        <group ref={groupRef} position={[x, y, 0]} scale={size}>
+            {/* Main thinner ring - NO DEPTH TEST (Always on Top) */}
             <mesh ref={ref}>
                 <ringGeometry args={[0.3, 0.35, 32]} />
-                <meshBasicMaterial color="#00ffff" transparent opacity={0.8} />
+                <meshBasicMaterial color="#00ffff" transparent opacity={1.0} depthTest={false} depthWrite={false} />
             </mesh>
-            {/* Very subtle center dot */}
+            {/* Center dot - NO DEPTH TEST */}
             <mesh>
-                <circleGeometry args={[0.05, 16]} />
-                <meshBasicMaterial color="#ffffff" opacity={0.8} transparent />
+                <circleGeometry args={[0.08, 16]} />
+                <meshBasicMaterial color="#ffffff" opacity={1.0} transparent depthTest={false} depthWrite={false} />
             </mesh>
         </group>
     )
@@ -100,8 +100,8 @@ function GlowingReticle({ x, y, dichoptic = false }: { x: number, y: number, dic
 
 // Helper to get World Position of a Reticle that is Head-Locked
 function getReticleWorldPosition(camera: THREE.Camera, gazeX: number, gazeY: number): THREE.Vector3 {
-    // Reticle is at (0,0,-3) relative to camera, offset by gaze
-    const vec = new THREE.Vector3((gazeX - 0.5) * 6, -(gazeY - 0.5) * 6, -3);
+    // Reticle is at (0,0,-2) relative to camera (very close)
+    const vec = new THREE.Vector3((gazeX - 0.5) * 4, -(gazeY - 0.5) * 4, -2);
     vec.applyMatrix4(camera.matrixWorld);
     return vec;
 }
@@ -244,36 +244,37 @@ function BalloonWrapper({ data, gazeX, gazeY, hitRadius = 2.0, onPop, onMiss, di
         <group>
             {!popped ? (
                 <group ref={meshRef} position={[data.x, data.y, 0]}>
-                    {/* Balloon Body - Slightly Larger */}
+                    {/* Balloon Body - EVEN SMALLER (0.3) */}
                     <mesh>
-                        <sphereGeometry args={[0.55, 32, 32]} />
+                        <sphereGeometry args={[0.3, 32, 32]} />
                         <meshStandardMaterial color={data.color} roughness={0.2} metalness={0.1} emissive={data.color} emissiveIntensity={0.4} />
                     </mesh>
-                    {/* Balloon Knot */}
-                    <mesh position={[0, -0.5, 0]}>
-                        <cylinderGeometry args={[0.08, 0.03, 0.15]} />
+                    {/* Balloon Knot - Scaled down */}
+                    <mesh position={[0, -0.3, 0]}>
+                        <cylinderGeometry args={[0.04, 0.015, 0.08]} />
                         <meshStandardMaterial color={data.color} />
                     </mesh>
-                    {/* String */}
-                    <mesh position={[0, -0.9, 0]}>
-                        <cylinderGeometry args={[0.015, 0.015, 0.8]} />
+                    {/* String - Scaled down */}
+                    <mesh position={[0, -0.5, 0]}>
+                        <cylinderGeometry args={[0.008, 0.008, 0.5]} />
                         <meshBasicMaterial color="white" transparent opacity={0.6} />
                     </mesh>
-                    {/* Shine/Reflection */}
-                    <mesh position={[0.25, 0.25, 0.45]}>
-                        <sphereGeometry args={[0.15]} />
+                    {/* Shine/Reflection - Scaled down */}
+                    <mesh position={[0.12, 0.12, 0.25]}>
+                        <sphereGeometry args={[0.08]} />
                         <meshBasicMaterial color="white" transparent opacity={0.4} />
                     </mesh>
 
-                    {/* Progress Ring - Shows dwell time progress */}
+                    {/* Progress Ring - Scaled down */}
                     {dwellTimeRef.current > 0 && (
-                        <mesh rotation={[0, 0, 0]} position={[0, 0, 0.6]}>
-                            <ringGeometry args={[0.2, 0.25, 32, 1, 0, (dwellTimeRef.current / REQUIRED_DWELL_TIME) * Math.PI * 2]} />
+                        <mesh rotation={[0, 0, 0]} position={[0, 0, 0.35]}>
+                            <ringGeometry args={[0.1, 0.14, 32, 1, 0, (dwellTimeRef.current / REQUIRED_DWELL_TIME) * Math.PI * 2]} />
                             <meshBasicMaterial
                                 color="#ffffff"
                                 transparent
                                 opacity={0.9}
                                 side={THREE.DoubleSide}
+                                depthTest={false} // Ensure ring renders on top
                             />
                         </mesh>
                     )}
@@ -294,20 +295,23 @@ function RotatingGrating({ opacity = 0.1, color = "white", dichoptic = false }: 
 
     useFrame((state, delta) => {
         if (meshRef.current) {
-            meshRef.current.rotation.z += delta * 0.05;
-
             // HEAD-LOCK Logic:
-            // Make the background follow the camera position and rotation exactly
+            // Follow camera EXACTLY to appear static on screen
             meshRef.current.position.copy(camera.position);
             meshRef.current.quaternion.copy(camera.quaternion);
-            meshRef.current.translateZ(-10); // Push back 10 units
+
+            // Re-apply Z-spin (relative to camera local axis)
+            meshRef.current.rotateZ(state.clock.elapsedTime * 0.05);
+
+            // Push back
+            meshRef.current.translateZ(-10);
         }
     });
 
     // Set layer for dichoptic rendering - ALWAYS set to Layer 0 (visible to both eyes)
     useEffect(() => {
         if (meshRef.current) {
-            meshRef.current.layers.set(0); // Background always visible to both eyes
+            meshRef.current.layers.set(0);
         }
     }, []);
 
@@ -332,10 +336,10 @@ function RotatingGrating({ opacity = 0.1, color = "white", dichoptic = false }: 
     }, []);
 
     return (
-        <mesh ref={meshRef} scale={[30, 30, 1]}>
+        <mesh ref={meshRef} scale={[40, 40, 1]}> {/* Increased scale to guarantee coverage */}
             {/* Position is handled by useFrame now */}
             <planeGeometry />
-            <meshBasicMaterial map={texture} transparent opacity={opacity} color={color} blending={THREE.AdditiveBlending} />
+            <meshBasicMaterial map={texture} transparent opacity={opacity} color={color} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
     );
 }

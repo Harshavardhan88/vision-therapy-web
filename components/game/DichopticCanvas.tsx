@@ -157,6 +157,16 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 }
             }
 
+            // Lock Screen Orientation to Landscape
+            try {
+                if (window.screen.orientation && (window.screen.orientation as any).lock) {
+                    await (window.screen.orientation as any).lock('landscape');
+                    setDebugInfo("Orientation Locked: Landscape");
+                }
+            } catch (err) {
+                console.warn("Orientation Lock failed:", err);
+            }
+
             // Try requesting permission on VR entry user gesture
             requestGyroPermission();
 
