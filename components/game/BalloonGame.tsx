@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useRef, useState, useMemo, useEffect } from "react";
 import { Text, Sky, Sphere, Cylinder } from "@react-three/drei";
 import * as THREE from "three";
@@ -361,6 +361,29 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
 
     const diffConfig = difficultySettings[difficulty];
 
+    const handlePop = () => {
+        const newScore = score + 1;
+        onScore(newScore);
+        setStreak(prev => {
+            const newStreak = prev >= 0 ? prev + 1 : 1;
+            setMultiplier(m => calculateMultiplier(m, newStreak, true));
+            return newStreak;
+        });
+
+        // Play pop sound
+        if (typeof window !== 'undefined') {
+            import('@/lib/audio').then(({ gameAudio }) => gameAudio.playPop());
+        }
+    };
+
+    const handleMiss = () => {
+        setStreak(prev => {
+            const newStreak = prev <= 0 ? prev - 1 : -1;
+            setMultiplier(m => calculateMultiplier(m, newStreak, false));
+            return newStreak;
+        });
+    }
+
     // Determine Balloon Colors based on Dichoptic Settings
     const getBalloonColor = () => {
         if (!settings.dichoptic) {
@@ -416,14 +439,8 @@ function BalloonScene({ gazeX, gazeY, difficulty = "medium", score, onScore, set
                 <BalloonWrapper
                     key={b.id}
                     data={{ ...b, speed: b.baseSpeed * multiplier, color: settings.dichoptic ? getBalloonColor() : b.color }}
-                    reticleX={(safeGazeX - 0.5) * 12} // Passed for collision check logic, but actual Reticle Mesh needs to move with camera?
-                    // Actually: checkCollision compares World Coords?
-                    // If Balloon (World) overlaps Reticle (World).
-                    // We need Reticle Position in World Space.
-                    // If Reticle is Head-Locked at (0,0,-3) relative to Camera...
-                    // Then ReticleWorldPos = Camera.position + Camera.forward * 3.
-                    // Collision check needs to account for this.
-                    reticleY={-(safeGazeY - 0.5) * 12}
+                    gazeX={safeGazeX}
+                    gazeY={safeGazeY}
                     hitRadius={diffConfig.hitRadius}
                     onPop={handlePop}
                     onMiss={handleMiss}
