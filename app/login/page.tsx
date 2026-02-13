@@ -104,14 +104,38 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-slate-500">
-                        Don't have an account?{" "}
-                        <Link href="/signup" className="text-blue-400 hover:text-blue-300">
-                            Create one
-                        </Link>
+                    <div className="mt-4 pt-4 border-t border-slate-800">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                            onClick={() => {
+                                localStorage.setItem("token", "demo-token");
+                                document.cookie = `auth_token=demo-token; path=/; max-age=604800; SameSite=Lax`;
+                                router.push("/dashboard/patient");
+                            }}
+                        >
+                            🧪 Try Demo Mode (Skip Login)
+                        </Button>
                     </div>
-                </CardContent>
-            </Card>
-        </div>
+
+                    <div className="mt-4 pt-4 border-t border-slate-800">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                            onClick={() => {
+                                localStorage.setItem("token", "demo-token");
+                                document.cookie = `auth_token = demo-token; path =/; max-age=604800; SameSite=Lax`;
+                                router.push("/dashboard/patient");
+                            }}
+                        >
+                            🧪 Try Demo Mode (Skip Login)
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+        </div >
     );
 }
