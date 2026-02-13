@@ -24,6 +24,15 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  themeColor: "#020617",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevent zooming in VR
+  viewportFit: "cover", // CRITICAL: Use full screen including notch area
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

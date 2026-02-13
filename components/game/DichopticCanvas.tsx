@@ -23,17 +23,20 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
         const width = gl.domElement.width;
         const height = gl.domElement.height;
 
+        // Ensure integer pixel values for viewport to avoid subpixel aliasing/gaps
+        const halfWidth = Math.floor(width / 2);
+        const remainingWidth = width - halfWidth;
+
         gl.autoClear = false;
         gl.clear();
         gl.setClearColor('#000000'); // Ensure black background
 
         // Sync Stereo Cameras with Main Camera (controlled by Orbit or DeviceOrientation)
-        // Main camera position acts as the "Head" center
         cameraL.current.copy(camera as THREE.PerspectiveCamera);
         cameraR.current.copy(camera as THREE.PerspectiveCamera);
 
-        // Fix aspect ratio for split viewports (each is half width)
-        const aspectRatio = (width / 2) / height;
+        // Fix aspect ratio for split viewports
+        const aspectRatio = halfWidth / height;
         cameraL.current.aspect = aspectRatio;
         cameraR.current.aspect = aspectRatio;
         cameraL.current.updateProjectionMatrix();
@@ -45,9 +48,6 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
         cameraR.current.position.x += halfIPD;
 
         // --- LAYER LOGIC ---
-        // Layer 0: Background (Visible to BOTH)
-        // Layer 1: Targets (Visible ONLY to Weak Eye)
-
         const CAM_L_LAYERS = weakEye === "left" ? [0, 1] : [0];
         const CAM_R_LAYERS = weakEye === "right" ? [0, 1] : [0];
 
@@ -58,16 +58,17 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
         cameraR.current.layers.disableAll();
         CAM_R_LAYERS.forEach(l => cameraR.current.layers.enable(l));
 
-        // --- RENDER LEFT EYE (0 to width/2) ---
-        gl.setViewport(0, 0, width / 2, height);
-        gl.setScissor(0, 0, width / 2, height);
+        // --- RENDER LEFT EYE (0 to halfWidth) ---
+        gl.setViewport(0, 0, halfWidth, height);
+        gl.setScissor(0, 0, halfWidth, height);
         gl.setScissorTest(true);
 
         gl.render(scene, cameraL.current);
 
-        // --- RENDER RIGHT EYE (width/2 to width) ---
-        gl.setViewport(width / 2, 0, width / 2, height);
-        gl.setScissor(width / 2, 0, width / 2, height);
+        // --- RENDER RIGHT EYE (halfWidth to width) ---
+        // Start exactly where Left ended to ensure no gap
+        gl.setViewport(halfWidth, 0, remainingWidth, height);
+        gl.setScissor(halfWidth, 0, remainingWidth, height);
         gl.setScissorTest(true);
 
         gl.render(scene, cameraR.current);
