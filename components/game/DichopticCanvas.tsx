@@ -83,38 +83,57 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
     const [isVR, setIsVR] = useState(false);
     const [hasGyroscope, setHasGyroscope] = useState(false);
     const [controlMode, setControlMode] = useState<'gyro' | 'touch'>('touch');
-    const [debugInfo, setDebugInfo] = useState<string>("");
+    const [debugInfo, setDebugInfo] = useState<string>("Initializing...");
+    const [showDebug, setShowDebug] = useState(false);
+    const [sensorData, setSensorData] = useState({ alpha: 0, beta: 0, gamma: 0 });
 
     // Enhanced Gyroscope Detection
     useEffect(() => {
         if (typeof window !== 'undefined' && 'DeviceOrientationEvent' in window) {
 
-            // Check if permission is needed (iOS 13+)
-            // @ts-ignore
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                setDebugInfo("iOS Device Detected. Needs Permission.");
-            } else {
-                setDebugInfo("Standard Device Orientation API available. Waiting for data...");
-            }
-
             const checkOrientation = (event: DeviceOrientationEvent) => {
+                setSensorData({
+                    alpha: event.alpha || 0,
+                    beta: event.beta || 0,
+                    gamma: event.gamma || 0
+                });
+
                 if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
-                    setHasGyroscope(true);
-                    setControlMode('gyro'); // Auto-switch to gyro if detected
-                    // setDebugInfo(`Gyro Active! Alpha: ${event.alpha?.toFixed(1)}`);
-                    setDebugInfo("Gyro Active!");
+                    if (!hasGyroscope) {
+                        setHasGyroscope(true);
+                        setControlMode('gyro');
+                        setDebugInfo("Gyro Active & Sending Data");
+                    }
                 }
             };
 
             window.addEventListener('deviceorientation', checkOrientation);
-
-            return () => {
-                window.removeEventListener('deviceorientation', checkOrientation);
-            };
+            return () => window.removeEventListener('deviceorientation', checkOrientation);
         } else {
-            setDebugInfo("DeviceOrientationEvent NOT supported.");
+            setDebugInfo("DeviceOrientationEvent NOT supported on this device/browser.");
         }
-    }, []);
+    }, [hasGyroscope]);
+
+    const requestGyroPermission = async () => {
+        // @ts-ignore
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                // @ts-ignore
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission === 'granted') {
+                    setHasGyroscope(true);
+                    setControlMode('gyro');
+                    setDebugInfo("Permission GRANTED");
+                } else {
+                    setDebugInfo("Permission DENIED");
+                }
+            } catch (err) {
+                setDebugInfo(`Permission Error: ${err}`);
+            }
+        } else {
+            setDebugInfo("No permission API found (Android?)");
+        }
+    };
 
     const toggleVR = async () => {
         if (!isVR) {
@@ -138,26 +157,9 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 }
             }
 
-            // Request device orientation permission logic for iOS 13+
-            // @ts-ignore
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                setDebugInfo("Requesting iOS Permission...");
-                try {
-                    // @ts-ignore
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') {
-                        setHasGyroscope(true);
-                        setControlMode('gyro');
-                        setDebugInfo("iOS Permission GRANTED!");
-                    } else {
-                        setDebugInfo("iOS Permission DENIED.");
-                        console.warn('Device orientation permission denied');
-                    }
-                } catch (err) {
-                    setDebugInfo(`iOS Permission Error: ${err}`);
-                    console.warn('Device orientation permission error:', err);
-                }
-            }
+            // Try requesting permission on VR entry user gesture
+            requestGyroPermission();
+
         } else {
             // Exit VR Mode
             if (document.exitFullscreen) document.exitFullscreen();
@@ -176,45 +178,60 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 <StereoRenderer weakEye={weakEye} ipd={ipd} />
 
                 {/* Smart Controls: Use gyroscope in VR if selected, otherwise OrbitControls */}
+                {/* FALLBACK: Even if in VR, if controlMode is TOUCH, allow OrbitControls to rotate! */}
                 {isVR && controlMode === 'gyro' ? (
                     <DeviceOrientationControls />
                 ) : (
                     <OrbitControls
                         enableZoom={false}
                         enablePan={false}
-                        enableRotate={!isVR} // Allow rotation normally if not in VR, or if in VR but touch mode
+                        enableRotate={true} // ALWAYS allow rotation (Fallback for VR if Gyro fails)
                         rotateSpeed={0.5}
                     />
                 )}
             </Canvas>
 
-            {/* CSS DIMMING OVERLAYS (More Robust for Mobile) */}
-            {/* Left Eye Dimming */}
-            <div
-                className="absolute top-0 left-0 w-1/2 h-full bg-black pointer-events-none transition-opacity duration-300"
-                style={{ opacity: leftOverlayOpacity }}
-            />
-            {/* Right Eye Dimming */}
-            <div
-                className="absolute top-0 right-0 w-1/2 h-full bg-black pointer-events-none transition-opacity duration-300"
-                style={{ opacity: rightOverlayOpacity }}
-            />
+            {/* CSS DIMMING OVERLAYS */}
+            <div className="absolute top-0 left-0 w-1/2 h-full bg-black pointer-events-none transition-opacity duration-300" style={{ opacity: leftOverlayOpacity }} />
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-black pointer-events-none transition-opacity duration-300" style={{ opacity: rightOverlayOpacity }} />
 
             {/* Alignment Line */}
             <div className={`absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/20 -translate-x-1/2 pointer-events-none transition-opacity duration-300 ${isVR ? 'opacity-100' : 'opacity-20'}`} />
 
-            {/* Control Toggle Button (Top Right) */}
-            <button
-                onClick={() => setControlMode(prev => prev === 'gyro' ? 'touch' : 'gyro')}
-                className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm hover:bg-white/20 transition-all font-bold"
-            >
-                Mode: {controlMode === 'gyro' ? 'GYRO' : 'TOUCH'}
-            </button>
-
-            {/* Debug Info */}
-            <div className="absolute top-4 left-4 z-50 bg-black/50 text-white text-xs p-2 rounded max-w-[200px] pointer-events-none">
-                {debugInfo}
+            {/* Top Right Controls */}
+            <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 items-end">
+                <button
+                    onClick={() => setControlMode(prev => prev === 'gyro' ? 'touch' : 'gyro')}
+                    className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm hover:bg-white/20 transition-all font-bold"
+                >
+                    Mode: {controlMode === 'gyro' ? 'GYRO' : 'TOUCH'}
+                </button>
+                <button
+                    onClick={() => setShowDebug(!showDebug)}
+                    className="px-2 py-1 bg-red-500/20 border border-red-500/40 rounded text-red-200 text-xs"
+                >
+                    {showDebug ? 'HIDE DEBUG' : 'DEBUG'}
+                </button>
             </div>
+
+            {/* Debug Panel */}
+            {showDebug && (
+                <div className="absolute top-20 left-4 z-50 bg-black/80 text-white text-xs p-4 rounded border border-white/20 max-w-[300px]">
+                    <h3 className="font-bold border-b border-white/20 pb-1 mb-2">Diagnostics</h3>
+                    <p>Status: {debugInfo}</p>
+                    <p>Gyro Detected: {hasGyroscope ? "YES" : "NO"}</p>
+                    <p>Mode: {controlMode}</p>
+                    <p>VR Active: {isVR ? "YES" : "NO"}</p>
+                    <div className="mt-2 font-mono bg-white/5 p-2 rounded">
+                        A: {sensorData.alpha.toFixed(1)}<br />
+                        B: {sensorData.beta.toFixed(1)}<br />
+                        G: {sensorData.gamma.toFixed(1)}
+                    </div>
+                    <button onClick={requestGyroPermission} className="mt-2 w-full bg-blue-600 py-1 rounded">
+                        Force Permission Request
+                    </button>
+                </div>
+            )}
 
             {/* VR Toggle Button */}
             <button
