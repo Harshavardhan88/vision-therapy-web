@@ -12,6 +12,16 @@ export const metadata: Metadata = {
   title: "AmblyoCare | Advanced Vision Therapy",
   description: "AI-powered VR vision therapy platform for Amblyopia treatment.",
   keywords: ["vision therapy", "amblyopia", "VR", "eye tracking", "medical"],
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AmblyoCare",
+  },
 };
 
 export default function RootLayout({
