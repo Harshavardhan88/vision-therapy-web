@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from . import models, schemas
+import models, schemas
 # pwd_context removed, handled in main or via import
 # To avoid circular import, we can move security logic to a separate file, but for now let's duplicate or refactor.
 # Refactoring is safer: Move security logic to security.py

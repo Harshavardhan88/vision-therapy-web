@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
-from .models import UserRole
+from models import UserRole
 
 # --- Forward Refs ---
 # Pydantic v1 requires update_forward_refs, v2 handles strings better but ordering is safer.

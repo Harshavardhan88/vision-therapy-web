@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from .database import SessionLocal
-from .models import User, TherapySession, UserRole
+from database import SessionLocal
+from models import User, TherapySession, UserRole
 
 def check_inactivity_and_notify():
     """
