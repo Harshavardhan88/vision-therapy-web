@@ -115,6 +115,7 @@ const StereoRenderer = ({ weakEye, strongEyeOpacity, ipd = 0.06 }: Omit<Dichopti
 export default function DichopticCanvas({ children, weakEye = "left", strongEyeOpacity = 1.0, ipd = 0.06 }: DichopticCanvasProps) {
     const [isVR, setIsVR] = useState(false);
     const [hasGyroscope, setHasGyroscope] = useState(false);
+    const [controlMode, setControlMode] = useState<'gyro' | 'touch'>('touch');
     const [debugInfo, setDebugInfo] = useState<string>("");
 
     // Enhanced Gyroscope Detection
@@ -132,6 +133,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
             const checkOrientation = (event: DeviceOrientationEvent) => {
                 if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
                     setHasGyroscope(true);
+                    setControlMode('gyro'); // Auto-switch to gyro if detected
                     setDebugInfo(`Gyro Active! Alpha: ${event.alpha?.toFixed(1)}`);
                     // We don't remove listener immediately to keep debugging valid
                 }
@@ -178,6 +180,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                     const permission = await DeviceOrientationEvent.requestPermission();
                     if (permission === 'granted') {
                         setHasGyroscope(true);
+                        setControlMode('gyro');
                         setDebugInfo("iOS Permission GRANTED! Gyro should work.");
                     } else {
                         setDebugInfo("iOS Permission DENIED.");
@@ -201,14 +204,14 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 {children}
                 <StereoRenderer weakEye={weakEye} strongEyeOpacity={strongEyeOpacity} ipd={ipd} />
 
-                {/* Smart Controls: Use gyroscope in VR if available, otherwise OrbitControls */}
-                {isVR && hasGyroscope ? (
+                {/* Smart Controls: Use gyroscope in VR if selected, otherwise OrbitControls */}
+                {isVR && controlMode === 'gyro' ? (
                     <DeviceOrientationControls />
                 ) : (
                     <OrbitControls
                         enableZoom={false}
                         enablePan={false}
-                        enableRotate={!isVR}
+                        enableRotate={!isVR} // Allow rotation normally if not in VR, or if in VR but touch mode
                         rotateSpeed={0.5}
                     />
                 )}
@@ -217,14 +220,20 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
             {/* Alignment Line */}
             <div className={`absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/20 -translate-x-1/2 pointer-events-none transition-opacity duration-300 ${isVR ? 'opacity-100' : 'opacity-20'}`} />
 
-            {/* Debug Info Overlay (Visible only when not functioning well or for testing) */}
-            {!hasGyroscope && (
-                <div className="absolute top-4 left-4 z-50 bg-black/50 text-white text-xs p-2 rounded max-w-[200px] pointer-events-none">
-                    Debug: {debugInfo}
-                </div>
-            )}
+            {/* Debug Info Overlay */}
+            <div className="absolute top-4 left-4 z-50 bg-black/50 text-white text-xs p-2 rounded max-w-[200px] pointer-events-none">
+                Debug: {debugInfo}
+            </div>
 
-            {/* VR Toggle Button with Gyro Indicator */}
+            {/* Control Toggle Button (Top Right) */}
+            <button
+                onClick={() => setControlMode(prev => prev === 'gyro' ? 'touch' : 'gyro')}
+                className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm hover:bg-white/20 transition-all font-bold"
+            >
+                Mode: {controlMode === 'gyro' ? 'GYRO' : 'TOUCH'}
+            </button>
+
+            {/* VR Toggle Button */}
             <button
                 onClick={toggleVR}
                 className="absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-bold tracking-widest hover:bg-white/20 transition-all z-50 flex items-center gap-2"
@@ -237,7 +246,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 ) : (
                     <>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        ENTER VR {hasGyroscope && <span className="text-xs text-green-400">(Gyro Active)</span>}
+                        ENTER VR {controlMode === 'gyro' && <span className="text-xs text-green-400">(Gyro)</span>}
                     </>
                 )}
             </button>
