@@ -1,0 +1,38 @@
+Error: Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+Require stack:
+  node_modules/@testing-library/react/dist/pure.js
+  node_modules/@testing-library/react/dist/index.js
+  sanity.import.test.js
+
+    at Resolver._throwModNotFoundError (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-resolve\build\index.js:863:11)
+    at Resolver.resolveModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-resolve\build\index.js:810:10)
+    at Resolver._getVirtualMockPath (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-resolve\build\index.js:1004:84)
+    at Resolver._getAbsolutePath (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-resolve\build\index.js:984:98)
+    at Resolver.getModuleID (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-resolve\build\index.js:949:31)
+    at Runtime._shouldMockCjs (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:1486:37)
+    at Runtime.requireModuleOrMock (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:961:16)
+    at Object.<anonymous> (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\@testing-library\react\dist\pure.js:46:12)
+    at Runtime._execModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:1268:24)
+    at Runtime._loadModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:944:12)
+    at Runtime.requireModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:832:12)
+    at Runtime.requireModuleOrMock (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:964:21)
+    at Object.<anonymous> (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\@testing-library\react\dist\index.js:7:13)
+    at Runtime._execModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:1268:24)
+    at Runtime._loadModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:944:12)
+    at Runtime.requireModule (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:832:12)
+    at Runtime.requireModuleOrMock (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runtime\build\index.js:964:21)
+    at Object.require (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\sanity.import.test.js:3:21)
+    at Promise.finally.completed (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+    at _callCircusTest (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+    at C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+    at _runTestsForDescribeBlock (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+    at run (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+    at runAndTransformResultsToJestFormat (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+    at jestAdapter (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-circus\build\runner.js:101:19)
+    at runTestInternal (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runner\build\index.js:275:16)
+    at runTest (C:\Users\HARSHAVARDHAN\Desktop\vision-therapy-web\node_modules\jest-runner\build\index.js:343:7)

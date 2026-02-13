@@ -1,0 +1,265 @@
+/* Accessibility CSS - High Contrast, Font Sizes, Color Blind Modes */
+
+/* ===== FONT SIZE VARIANTS ===== */
+[data-font-size="small"] {
+    font-size: 14px;
+}
+
+[data-font-size="medium"] {
+    font-size: 16px;
+}
+
+[data-font-size="large"] {
+    font-size: 18px;
+}
+
+[data-font-size="xlarge"] {
+    font-size: 20px;
+}
+
+/* Scale headings proportionally */
+[data-font-size="large"] h1 {
+    font-size: 2.5rem;
+}
+
+[data-font-size="large"] h2 {
+    font-size: 2rem;
+}
+
+[data-font-size="large"] h3 {
+    font-size: 1.75rem;
+}
+
+[data-font-size="xlarge"] h1 {
+    font-size: 3rem;
+}
+
+[data-font-size="xlarge"] h2 {
+    font-size: 2.5rem;
+}
+
+[data-font-size="xlarge"] h3 {
+    font-size: 2rem;
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+.high-contrast {
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --border-color: #ffffff;
+    --focus-color: #ffff00;
+}
+
+.high-contrast body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.high-contrast button,
+.high-contrast a,
+.high-contrast input,
+.high-contrast select {
+    border: 2px solid var(--border-color) !important;
+}
+
+.high-contrast button:focus,
+.high-contrast a:focus,
+.high-contrast input:focus,
+.high-contrast select:focus {
+    outline: 3px solid var(--focus-color) !important;
+    outline-offset: 2px;
+}
+
+/* ===== REDUCED MOTION ===== */
+.reduce-motion,
+.reduce-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
+/* ===== FOCUS INDICATORS ===== */
+.show-focus *:focus {
+    outline: 3px solid rgb(6 182 212) !important;
+    outline-offset: 2px;
+}
+
+.show-focus button:focus,
+.show-focus a:focus {
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.5) !important;
+}
+
+/* ===== COLOR BLIND MODES ===== */
+
+/* Protanopia (Red-Blind) Filter */
+[data-colorblind-mode="protanopia"] {
+    filter: url(#protanopia-filter);
+}
+
+/* Deuteranopia (Green-Blind) Filter */
+[data-colorblind-mode="deuteranopia"] {
+    filter: url(#deuteranopia-filter);
+}
+
+/* Tritanopia (Blue-Blind) Filter */
+[data-colorblind-mode="tritanopia"] {
+    filter: url(#tritanopia-filter);
+}
+
+/* ===== SCREEN READER ONLY ===== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* ===== KEYBOARD NAVIGATION ===== */
+.keyboard-nav *:focus {
+    outline: 3px dashed rgb(6 182 212);
+    outline-offset: 3px;
+}
+
+/* ===== SKIP LINKS ===== */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: rgb(6 182 212);
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* ===== ACCESSIBLE BUTTONS ===== */
+button[aria-pressed="true"] {
+    background-color: rgb(6 182 212);
+    color: white;
+}
+
+button[aria-expanded="true"]::after {
+    content: " (expanded)";
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+}
+
+/* ===== FOCUS VISIBLE POLYFILL ===== */
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+*:focus-visible {
+    outline: 3px solid rgb(6 182 212);
+    outline-offset: 2px;
+}
+
+/* ===== ACCESSIBLE FORM CONTROLS ===== */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* ===== LIVE REGIONS ===== */
+[aria-live] {
+    position: relative;
+}
+
+/* ===== DISABLED STATES ===== */
+[aria-disabled="true"],
+:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ===== TOOLTIPS ===== */
+[role="tooltip"] {
+    position: absolute;
+    z-index: 1000;
+    background: rgb(30 41 59);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    max-width: 250px;
+}
+
+/* ===== LANDMARKS ===== */
+main:focus {
+    outline: none;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    * {
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* ===== PREFERS REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ===== PREFERS CONTRAST ===== */
+@media (prefers-contrast: high) {
+    * {
+        border-width: 2px;
+    }
+
+    button,
+    a,
+    input,
+    select {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ===== PREFERS COLOR SCHEME ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+}
