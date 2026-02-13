@@ -115,29 +115,35 @@ const StereoRenderer = ({ weakEye, strongEyeOpacity, ipd = 0.06 }: Omit<Dichopti
 export default function DichopticCanvas({ children, weakEye = "left", strongEyeOpacity = 1.0, ipd = 0.06 }: DichopticCanvasProps) {
     const [isVR, setIsVR] = useState(false);
     const [hasGyroscope, setHasGyroscope] = useState(false);
+    const [debugInfo, setDebugInfo] = useState<string>("");
 
-    // Detect if device has gyroscope/orientation sensors
+    // Enhanced Gyroscope Detection
     useEffect(() => {
         if (typeof window !== 'undefined' && 'DeviceOrientationEvent' in window) {
-            // Check if device orientation is supported
+
+            // Check if permission is needed (iOS 13+)
+            // @ts-ignore
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                setDebugInfo("iOS Device Detected. Needs Permission.");
+            } else {
+                setDebugInfo("Standard Device Orientation API available. Waiting for data...");
+            }
+
             const checkOrientation = (event: DeviceOrientationEvent) => {
                 if (event.alpha !== null || event.beta !== null || event.gamma !== null) {
                     setHasGyroscope(true);
-                    window.removeEventListener('deviceorientation', checkOrientation);
+                    setDebugInfo(`Gyro Active! Alpha: ${event.alpha?.toFixed(1)}`);
+                    // We don't remove listener immediately to keep debugging valid
                 }
             };
 
             window.addEventListener('deviceorientation', checkOrientation);
 
-            // Cleanup after 1 second if no orientation detected
-            const timeout = setTimeout(() => {
-                window.removeEventListener('deviceorientation', checkOrientation);
-            }, 1000);
-
             return () => {
-                clearTimeout(timeout);
                 window.removeEventListener('deviceorientation', checkOrientation);
             };
+        } else {
+            setDebugInfo("DeviceOrientationEvent NOT supported on this device/browser.");
         }
     }, []);
 
@@ -154,6 +160,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
             } catch (err) {
                 console.warn("Fullscreen denied:", err);
             }
+
             if ('wakeLock' in navigator) {
                 try {
                     await (navigator as any).wakeLock.request('screen');
@@ -162,14 +169,22 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 }
             }
 
-            // Request device orientation permission on iOS 13+
-            if (hasGyroscope && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+            // Request device orientation permission logic for iOS 13+
+            // @ts-ignore
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                setDebugInfo("Requesting iOS Permission...");
                 try {
-                    const permission = await (DeviceOrientationEvent as any).requestPermission();
-                    if (permission !== 'granted') {
+                    // @ts-ignore
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        setHasGyroscope(true);
+                        setDebugInfo("iOS Permission GRANTED! Gyro should work.");
+                    } else {
+                        setDebugInfo("iOS Permission DENIED.");
                         console.warn('Device orientation permission denied');
                     }
                 } catch (err) {
+                    setDebugInfo(`iOS Permission Error: ${err}`);
                     console.warn('Device orientation permission error:', err);
                 }
             }
@@ -202,6 +217,13 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
             {/* Alignment Line */}
             <div className={`absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/20 -translate-x-1/2 pointer-events-none transition-opacity duration-300 ${isVR ? 'opacity-100' : 'opacity-20'}`} />
 
+            {/* Debug Info Overlay (Visible only when not functioning well or for testing) */}
+            {!hasGyroscope && (
+                <div className="absolute top-4 left-4 z-50 bg-black/50 text-white text-xs p-2 rounded max-w-[200px] pointer-events-none">
+                    Debug: {debugInfo}
+                </div>
+            )}
+
             {/* VR Toggle Button with Gyro Indicator */}
             <button
                 onClick={toggleVR}
@@ -215,7 +237,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                 ) : (
                     <>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        ENTER VR {hasGyroscope && <span className="text-xs text-green-400">(Gyro)</span>}
+                        ENTER VR {hasGyroscope && <span className="text-xs text-green-400">(Gyro Active)</span>}
                     </>
                 )}
             </button>
