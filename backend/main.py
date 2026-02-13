@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from . import models, schemas, crud, database, gamification
+import models, schemas, crud, database, gamification
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 import bcrypt
