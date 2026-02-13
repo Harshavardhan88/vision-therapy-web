@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Wifi, WifiOff } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default function LiveSessionView() {
     const params = useParams();
     const router = useRouter();
