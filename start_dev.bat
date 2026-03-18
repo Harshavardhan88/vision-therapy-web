@@ -5,7 +5,7 @@ echo ==========================================
 
 echo [1/2] Starting Backend Server (FastAPI)...
 :: Opens a new window for the backend
-start "AmblyoCare Backend" cmd /k "cd backend && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000"
+start "AmblyoCare Backend" cmd /k "python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000"
 
 echo [2/2] Starting Frontend Server (Next.js)...
 :: Opens a new window for the frontend

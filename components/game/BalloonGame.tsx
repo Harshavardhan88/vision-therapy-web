@@ -569,13 +569,16 @@ export default function BalloonGame({
             )}
 
             <div className="absolute inset-0 pointer-events-none">
-                <GameOverlay
-                    title="Balloon Pop"
-                    score={score}
-                    difficulty={difficulty}
-                    onExit={onExit}
-                    formattedTime={formattedTime}
-                />
+                {/* Hide Overlay in Dichoptic Mode to prevent bleed */}
+                {!settings.dichoptic && (
+                    <GameOverlay
+                        title="Balloon Pop"
+                        score={score}
+                        difficulty={difficulty}
+                        onExit={onExit}
+                        formattedTime={formattedTime}
+                    />
+                )}
                 {settings.dichoptic && (
                     <div className="absolute top-20 left-4 pointer-events-none">
                         <div className="text-xs font-mono text-slate-400 bg-slate-900/80 px-2 py-1 rounded border border-slate-700">

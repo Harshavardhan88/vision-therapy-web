@@ -31,8 +31,9 @@ const { chromium } = require('playwright');
             await page.waitForTimeout(2000);
 
             // Capture game settings page
-            await page.screenshot({ path: 'balloon_settings.png', fullPage: true });
-            console.log('[OK] Captured game settings');
+            const artifactPath = 'C:\\Users\\HARSHAVARDHAN\\.gemini\\antigravity\\brain\\34c24f1c-d442-416a-8d81-41e392f44a5e\\';
+            await page.screenshot({ path: artifactPath + 'balloon_settings.png', fullPage: true });
+            console.log('[OK] Captured game settings to ' + artifactPath);
 
             // 4. Make sure dichoptic mode is enabled (it should be by default)
             // Look for the "Start Therapy Session" button
@@ -45,12 +46,12 @@ const { chromium } = require('playwright');
                 await page.waitForTimeout(5000);
 
                 // Capture VR split-screen view
-                await page.screenshot({ path: 'vr_split_screen.png', fullPage: false });
+                await page.screenshot({ path: artifactPath + 'vr_split_screen.png', fullPage: false });
                 console.log('[OK] Captured VR split-screen view');
 
                 // Wait a bit more to capture gameplay
                 await page.waitForTimeout(3000);
-                await page.screenshot({ path: 'vr_gameplay.png', fullPage: false });
+                await page.screenshot({ path: artifactPath + 'vr_gameplay.png', fullPage: false });
                 console.log('[OK] Captured VR gameplay');
             }
         }

@@ -16,9 +16,9 @@ async function capturePreview() {
         await page.setViewport({ width: 1920, height: 1080 });
 
         console.log('📱 Navigating to game page...');
-        await page.goto('http://localhost:3003/dashboard/patient/games/target-tap', {
+        await page.goto('http://localhost:3000/dashboard/patient/games/balloon-pop', {
             waitUntil: 'networkidle0',
-            timeout: 30000
+            timeout: 60000
         });
 
         // Screenshot 1: Settings page

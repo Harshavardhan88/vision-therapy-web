@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { GamifiedBackground } from "@/components/ui/gamified-background";
-import { MagicCursor } from "@/components/ui/magic-cursor";
 
 import Script from "next/script";
 
@@ -45,14 +44,13 @@ export default function RootLayout({
       >
         <Script
           src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
         <Script
           src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
         <GamifiedBackground />
-        <MagicCursor />
         {children}
       </body>
     </html>

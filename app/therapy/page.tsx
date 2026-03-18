@@ -382,7 +382,7 @@ export default function TherapyPage() {
                         gazeX={gaze.x}
                         gazeY={gaze.y}
                         onExit={handleExitGame}
-                        settings={therapySettings}
+                        settings={{ ...therapySettings, onScoreUpdate: setScore }}
                     />
                 ) : selectedGame === 'balloon' ? (
                     <BalloonGame

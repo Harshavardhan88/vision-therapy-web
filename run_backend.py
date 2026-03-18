@@ -4,6 +4,7 @@ import os
 
 # Add parent directory to path to allow imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend"))
 
 if __name__ == "__main__":
     uvicorn.run(

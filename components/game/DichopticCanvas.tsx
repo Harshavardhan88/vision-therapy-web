@@ -25,27 +25,43 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
 
         // Ensure integer pixel values for viewport to avoid subpixel aliasing/gaps
         const halfWidth = Math.floor(width / 2);
-        const remainingWidth = width - halfWidth;
 
-        gl.autoClear = false;
-        gl.clear();
-        gl.setClearColor('#000000'); // Ensure black background
+        // SAFETY GAP: Black bar in middle to prevent optical bleed
+        const GAP = 20;
+        const leftWidth = halfWidth - (GAP / 2);
+        const rightStart = halfWidth + (GAP / 2);
+        const rightWidth = width - rightStart;
+
+        // 1. DONT Clear everything globally. Clear PER EYE to ensure strict isolation.
+        // gl.setScissorTest(false);
+        // gl.clear(); 
+        // gl.setClearColor('#000000'); // Ensure black background
 
         // Sync Stereo Cameras with Main Camera (controlled by Orbit or DeviceOrientation)
+        // Ensure main camera matrices are up to date
+        camera.updateMatrixWorld();
         cameraL.current.copy(camera as THREE.PerspectiveCamera);
         cameraR.current.copy(camera as THREE.PerspectiveCamera);
 
         // Fix aspect ratio for split viewports
-        const aspectRatio = halfWidth / height;
+        // Fix aspect ratio for split viewports
+        // Aspect based on reduced width
+        const aspectRatio = leftWidth / height;
         cameraL.current.aspect = aspectRatio;
         cameraR.current.aspect = aspectRatio;
         cameraL.current.updateProjectionMatrix();
         cameraR.current.updateProjectionMatrix();
 
-        // Offset for IPD
-        const halfIPD = ipd / 2;
-        cameraL.current.position.x -= halfIPD;
-        cameraR.current.position.x += halfIPD;
+        // Offset for IPD - DEBUG: Force 0 to check alignment
+        const halfIPD = 0; // ipd / 2;
+        // Transform position by camera orientation for correct IPD shift
+        // Simple X-shift works if camera is upright, but for full correctness we should slide along local X
+        cameraL.current.translateX(-halfIPD);
+        cameraR.current.translateX(halfIPD);
+
+        // Ensure matrices are updated after transform
+        cameraL.current.updateMatrixWorld();
+        cameraR.current.updateMatrixWorld();
 
         // --- LAYER LOGIC ---
         const CAM_L_LAYERS = weakEye === "left" ? [0, 1] : [0];
@@ -59,18 +75,18 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
         CAM_R_LAYERS.forEach(l => cameraR.current.layers.enable(l));
 
         // --- RENDER LEFT EYE (0 to halfWidth) ---
-        gl.setViewport(0, 0, halfWidth, height);
-        gl.setScissor(0, 0, halfWidth, height);
+        // --- RENDER LEFT EYE (0 to leftWidth) ---
+        gl.setViewport(0, 0, leftWidth, height);
+        gl.setScissor(0, 0, leftWidth, height);
         gl.setScissorTest(true);
-
+        gl.clear(); // STRICT CLEAR: Only clear left side
         gl.render(scene, cameraL.current);
 
-        // --- RENDER RIGHT EYE (halfWidth to width) ---
-        // Start exactly where Left ended to ensure no gap
-        gl.setViewport(halfWidth, 0, remainingWidth, height);
-        gl.setScissor(halfWidth, 0, remainingWidth, height);
+        // --- RENDER RIGHT EYE (rightStart to width) ---
+        gl.setViewport(rightStart, 0, rightWidth, height);
+        gl.setScissor(rightStart, 0, rightWidth, height);
         gl.setScissorTest(true);
-
+        gl.clear(); // STRICT CLEAR: Only clear right side
         gl.render(scene, cameraR.current);
 
         gl.setScissorTest(false);
@@ -183,7 +199,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
 
     return (
         <div className="w-full h-full relative bg-black">
-            <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
+            <Canvas camera={{ position: [0, 0, 5], fov: 60 }} gl={{ autoClear: false }}>
                 {children}
                 <StereoRenderer weakEye={weakEye} ipd={ipd} />
 
@@ -195,7 +211,7 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
                     <OrbitControls
                         enableZoom={false}
                         enablePan={false}
-                        enableRotate={true} // ALWAYS allow rotation (Fallback for VR if Gyro fails)
+                        enableRotate={true} // Re-enabled for Desktop Preview interaction
                         rotateSpeed={0.5}
                     />
                 )}

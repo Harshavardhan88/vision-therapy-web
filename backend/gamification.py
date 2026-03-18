@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-import models, crud
+from . import models, crud
 from datetime import datetime
 
 # Define Achievements hardcoded for MVP

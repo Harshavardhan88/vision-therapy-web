@@ -24,7 +24,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        // Prevent redirect for /users/me specifically to allow graceful degradation in therapy page
+        const isGetMe = error.config?.url === '/users/me';
+        if (error.response?.status === 401 && !isGetMe) {
             // Redirect to login if unauthorized
             if (typeof window !== 'undefined') {
                 window.location.href = '/login';

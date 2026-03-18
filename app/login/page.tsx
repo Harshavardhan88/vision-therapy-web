@@ -37,7 +37,7 @@ export default function LoginPage() {
                 const token = response.data.access_token;
                 localStorage.setItem("token", token);
                 // Set cookie for Middleware (Effective for 7 days)
-                document.cookie = `auth_token = ${token}; path =/; max-age=604800; SameSite=Lax`;
+                document.cookie = `auth_token=${token}; path=/; max-age=604800; SameSite=Lax`;
 
                 // Redirect based on role
                 const role = response.data.role;

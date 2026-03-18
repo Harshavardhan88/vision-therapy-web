@@ -319,10 +319,10 @@ export default function DepthReachVR(props: DepthReachProps) {
                     <Controllers />
                     <Hands />
                     <GameScene
-                        settings={settings}
                         difficulty={difficulty}
                         score={score}
                         onScore={handleScore}
+                        settings={settings} // Pass settings
                     />
                 </XR>
             </Canvas>
@@ -332,7 +332,7 @@ export default function DepthReachVR(props: DepthReachProps) {
                     title="Depth Reach VR"
                     score={score}
                     difficulty={difficulty}
-                    onExit={onExit}
+                    onExit={props.onExit} // Pass onExit prop
                 />
             </div>
 

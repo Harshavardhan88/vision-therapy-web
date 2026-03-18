@@ -19,6 +19,71 @@ export default function TargetTapPage() {
         gaborOrientation: 0,
         crowding: true
     });
+    const [score, setScore] = useState(0);
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [showSummary, setShowSummary] = useState(false);
+
+    const handleStart = () => {
+        setIsPlaying(true);
+        setStartTime(Date.now());
+        setScore(0);
+    };
+
+    const handleExit = async () => {
+        if (startTime) {
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+
+            // Save Session
+            try {
+                // We need the user ID. 
+                // Option A: Fetch 'me' again. 
+                // Option B: create a wrapper or just fetch here.
+                const userRes = await import("@/lib/api").then(m => m.auth.getMe());
+                const userId = userRes.data.id;
+
+                await import("@/lib/api").then(m => m.auth.saveSession({
+                    user_id: userId,
+                    game_type: "eye_quest_vr", // Mapped from 'space' or similar in backend, or new type
+                    difficulty: difficulty,
+                    duration_seconds: duration,
+                    score: score,
+                    balloons_popped: 0,
+                    accuracy: 0,
+                    fixation_accuracy: 0,
+                    avg_response_time: 0
+                }));
+            } catch (e) {
+                console.error("Failed to save session", e);
+            }
+        }
+        setIsPlaying(false);
+        setShowSummary(true);
+    };
+
+    if (showSummary) {
+        return (
+            <div className="w-full h-screen bg-slate-950 flex items-center justify-center p-8">
+                <div className="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-md w-full text-center">
+                    <h2 className="text-2xl font-bold text-white mb-2">VR Session Complete</h2>
+                    <div className="text-5xl font-bold text-cyan-400 mb-4">{score} PTS</div>
+                    <div className="text-slate-400 mb-8">Targets Reached</div>
+
+                    <button
+                        onClick={() => router.push('/dashboard/patient')}
+                        className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-white mb-4"
+                    >
+                        Return to Dashboard
+                    </button>
+                    <button
+                        onClick={() => setShowSummary(false)}
+                        className="w-full py-4 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-slate-300"
+                    >
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full h-screen bg-slate-950 text-white flex flex-col">
@@ -117,7 +182,7 @@ export default function TargetTapPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsPlaying(true)}
+                        onClick={handleStart}
                         className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-bold text-lg shadow-xl shadow-cyan-500/20 transition-all transform hover:scale-[1.02]"
                     >
                         🥽 ENTER VR THERAPY
@@ -132,7 +197,8 @@ export default function TargetTapPage() {
                     <TargetTapVR
                         difficulty={difficulty}
                         settings={settings}
-                        onExit={() => setIsPlaying(false)}
+                        onExit={handleExit}
+                        onScoreUpdate={setScore}
                     />
                 </div>
             )}

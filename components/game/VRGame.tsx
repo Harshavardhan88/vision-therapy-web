@@ -302,7 +302,7 @@ function GameScene({ gazeX, gazeY, difficulty, mode, settings = { weakEye: 'left
             <ambientLight intensity={0.4} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             <Cockpit />
-            <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+            <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={0} />
             <Text position={[0, 3, -8]} fontSize={0.8} color="#0ea5e9" anchorX="center" anchorY="middle" fillOpacity={0.8}>
                 {waveText}
             </Text>
