@@ -286,6 +286,15 @@ function GameScene({ settings, difficulty, score, onScore }: any) {
     );
 }
 
+// Small bridge component: must be inside <XR> to safely call useXR
+function XRPresenceTracker({ onPresence }: { onPresence: (isPresenting: boolean) => void }) {
+    const { isPresenting } = useXR();
+    useEffect(() => {
+        onPresence(isPresenting);
+    }, [isPresenting, onPresence]);
+    return null;
+}
+
 export default function DepthReachVR(props: DepthReachProps) {
     const {
         settings = { weakEye: "left", strongEyeOpacity: 0.3 },
@@ -295,7 +304,7 @@ export default function DepthReachVR(props: DepthReachProps) {
 
     const [score, setScore] = useState(0);
     const [previewModeActive, setPreviewModeActive] = useState(false);
-    const { isPresenting } = useXR();
+    const [isPresenting, setIsPresenting] = useState(false);
 
     const handleScore = (s: number) => {
         setScore(s);
@@ -318,11 +327,12 @@ export default function DepthReachVR(props: DepthReachProps) {
                 <XR>
                     <Controllers />
                     <Hands />
+                    <XRPresenceTracker onPresence={setIsPresenting} />
                     <GameScene
                         difficulty={difficulty}
                         score={score}
                         onScore={handleScore}
-                        settings={settings} // Pass settings
+                        settings={settings}
                     />
                 </XR>
             </Canvas>
@@ -332,7 +342,7 @@ export default function DepthReachVR(props: DepthReachProps) {
                     title="Depth Reach VR"
                     score={score}
                     difficulty={difficulty}
-                    onExit={props.onExit} // Pass onExit prop
+                    onExit={props.onExit}
                 />
             </div>
 
@@ -347,7 +357,7 @@ export default function DepthReachVR(props: DepthReachProps) {
                         <div className="text-6xl mb-4">🥽</div>
                         <h2 className="text-2xl font-bold text-cyan-400 mb-2">VR Headset Required</h2>
                         <p className="text-slate-300 text-sm mb-4">
-                            This is a pure VR therapy experience. Put on your VR headset and click "ENTER VR" to begin.
+                            This is a pure VR therapy experience. Put on your VR headset and click &quot;ENTER VR&quot; to begin.
                         </p>
                         <div className="text-xs text-slate-500">
                             Depth perception training requires stereoscopic 3D

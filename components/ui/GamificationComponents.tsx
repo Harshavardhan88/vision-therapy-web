@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect } from "react";
 import { useGamification } from "@/contexts/GamificationContext";
 import { ProgressRing } from "./VisualFeedback";
 import { AccessibleCard } from "./AccessibleComponents";

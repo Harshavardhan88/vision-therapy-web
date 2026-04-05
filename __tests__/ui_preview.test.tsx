@@ -8,7 +8,7 @@ import '@testing-library/jest-dom';
 jest.mock('lucide-react', () => ({
     X: () => <span data-testid="icon-x">X</span>,
     Pause: () => <span data-testid="icon-pause">||</span>,
-    Play: () => <span data-testid="icon-play">></span>,
+    Play: () => <span data-testid="icon-play">&#9655;</span>,
 }));
 
 describe('Game UI Preview (GameOverlay)', () => {

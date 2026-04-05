@@ -356,8 +356,6 @@ def get_sessions(
         })
     return result
 
-    return result
-
 @app.post("/api/schedule/{patient_id}")
 def schedule_session(
     patient_id: int, 

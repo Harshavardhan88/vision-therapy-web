@@ -5,6 +5,7 @@ import { useRef, useState, useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { Text, OrbitControls } from "@react-three/drei";
 import DichopticCanvas from "./DichopticCanvas";
+import { GameOverlay } from "./GameOverlay";
 
 // --- Types ---
 export interface Question {
@@ -56,7 +57,7 @@ function HeadLockedReticle({ gazeX, gazeY }: { gazeX: number, gazeY: number }) {
             const ndcX = (gazeX - 0.5) * 2;
             const ndcY = (0.5 - gazeY) * 2; // Invert Y for NDC? (Top=1, Bottom=-1). gazeY 0=top. Correct.
 
-            raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+            raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
 
             // 2. Position Reticle along the Ray at fixed distance
             const distance = 4; // Visual distance
@@ -110,7 +111,7 @@ const Balloon = ({ id, position, text, isCorrect, onPop, gazeX, gazeY }: { id: n
         // 1. Setup Ray
         const ndcX = (gazeX - 0.5) * 2;
         const ndcY = (0.5 - gazeY) * 2;
-        raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
 
         // 2. Intersect this balloon?
         // Note: intersectObject works on children (meshes)
@@ -254,9 +255,13 @@ export default function CosmicQuiz({ gazeX, gazeY, onExit, settings = {} }: Cosm
                 </Canvas>
             )}
 
-            {/* Hint overlay for non-dichoptic mode checking */}
-            <div className="absolute top-4 left-4 pointer-events-none text-white/50 text-xs font-mono">
-                COSMIC QUIZ ACTIVE
+            {/* Always-visible EXIT button via GameOverlay */}
+            <div className="absolute inset-0 pointer-events-none">
+                <GameOverlay
+                    title="Cosmic Quiz"
+                    score={0}
+                    onExit={onExit}
+                />
             </div>
 
             {dichoptic && (

@@ -203,9 +203,7 @@ export default function TherapyPage() {
                     </div>
                     <button onClick={() => {
                         setShowSummary(false);
-                        setSelectedGame("space"); // Restart
-                        setSessionStart(new Date());
-                        setSelectedGame("space"); // Restart
+                        setSelectedGame("space");
                         setSessionStart(new Date());
                         setScore(0);
                         setSessionDuration(0);
@@ -315,7 +313,7 @@ export default function TherapyPage() {
                 ) : (
                     <div className="max-w-4xl w-full">
                         <h1 className="text-4xl font-bold text-white text-center mb-12">Select Sync Protocol</h1>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Neon Voyage Card */}
                             <button
                                 onClick={() => handleGameSelect("space")}

@@ -52,8 +52,8 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
         cameraL.current.updateProjectionMatrix();
         cameraR.current.updateProjectionMatrix();
 
-        // Offset for IPD - DEBUG: Force 0 to check alignment
-        const halfIPD = 0; // ipd / 2;
+        // Offset for IPD
+        const halfIPD = ipd / 2;
         // Transform position by camera orientation for correct IPD shift
         // Simple X-shift works if camera is upright, but for full correctness we should slide along local X
         cameraL.current.translateX(-halfIPD);
@@ -74,23 +74,23 @@ const StereoRenderer = ({ weakEye, ipd = 0.06 }: Omit<DichopticCanvasProps, "chi
         cameraR.current.layers.disableAll();
         CAM_R_LAYERS.forEach(l => cameraR.current.layers.enable(l));
 
-        // --- RENDER LEFT EYE (0 to halfWidth) ---
-        // --- RENDER LEFT EYE (0 to leftWidth) ---
+        // CRITICAL: Clear before rendering any eye!
+        gl.clear();
+
+        // --- RENDER LEFT EYE ---
         gl.setViewport(0, 0, leftWidth, height);
         gl.setScissor(0, 0, leftWidth, height);
         gl.setScissorTest(true);
-        gl.clear(); // STRICT CLEAR: Only clear left side
         gl.render(scene, cameraL.current);
 
-        // --- RENDER RIGHT EYE (rightStart to width) ---
+        // --- RENDER RIGHT EYE ---
         gl.setViewport(rightStart, 0, rightWidth, height);
         gl.setScissor(rightStart, 0, rightWidth, height);
         gl.setScissorTest(true);
-        gl.clear(); // STRICT CLEAR: Only clear right side
         gl.render(scene, cameraR.current);
 
         gl.setScissorTest(false);
-    }, 1); // CRITICAL: Run after default render
+    }, 1); // PRIORITY 1: Overrides default R3F render pass
 
     return null;
 };

@@ -26,7 +26,6 @@ export default function PatientDashboard() {
         totalSessions: 0,
         totalMinutes: 0,
         avgScore: 0,
-        avgScore: 0,
         bestScore: 0,
         avgFixation: 0
     });
