@@ -103,6 +103,18 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
     const [showDebug, setShowDebug] = useState(false);
     const [sensorData, setSensorData] = useState({ alpha: 0, beta: 0, gamma: 0 });
 
+    // Keyboard shortcut: Ctrl+D to toggle debug panel
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                setShowDebug(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     // Enhanced Gyroscope Detection
     useEffect(() => {
         if (typeof window !== 'undefined' && 'DeviceOrientationEvent' in window) {
@@ -224,39 +236,40 @@ export default function DichopticCanvas({ children, weakEye = "left", strongEyeO
             {/* Alignment Line */}
             <div className={`absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/20 -translate-x-1/2 pointer-events-none transition-opacity duration-300 ${isVR ? 'opacity-100' : 'opacity-20'}`} />
 
-            {/* Top Right Controls */}
-            <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 items-end">
-                <button
-                    onClick={() => setControlMode(prev => prev === 'gyro' ? 'touch' : 'gyro')}
-                    className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm hover:bg-white/20 transition-all font-bold"
-                >
-                    Mode: {controlMode === 'gyro' ? 'GYRO' : 'TOUCH'}
-                </button>
-                <button
-                    onClick={() => setShowDebug(!showDebug)}
-                    className="px-2 py-1 bg-red-500/20 border border-red-500/40 rounded text-red-200 text-xs"
-                >
-                    {showDebug ? 'HIDE DEBUG' : 'DEBUG'}
-                </button>
-            </div>
-
-            {/* Debug Panel */}
+            {/* Developer Controls — hidden by default, toggle with Ctrl+D */}
             {showDebug && (
-                <div className="absolute top-20 left-4 z-50 bg-black/80 text-white text-xs p-4 rounded border border-white/20 max-w-[300px]">
-                    <h3 className="font-bold border-b border-white/20 pb-1 mb-2">Diagnostics</h3>
-                    <p>Status: {debugInfo}</p>
-                    <p>Gyro Detected: {hasGyroscope ? "YES" : "NO"}</p>
-                    <p>Mode: {controlMode}</p>
-                    <p>VR Active: {isVR ? "YES" : "NO"}</p>
-                    <div className="mt-2 font-mono bg-white/5 p-2 rounded">
-                        A: {sensorData.alpha.toFixed(1)}<br />
-                        B: {sensorData.beta.toFixed(1)}<br />
-                        G: {sensorData.gamma.toFixed(1)}
+                <>
+                    <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 items-end">
+                        <button
+                            onClick={() => setControlMode(prev => prev === 'gyro' ? 'touch' : 'gyro')}
+                            className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-sm hover:bg-white/20 transition-all font-bold"
+                        >
+                            Mode: {controlMode === 'gyro' ? 'GYRO' : 'TOUCH'}
+                        </button>
+                        <button
+                            onClick={() => setShowDebug(false)}
+                            className="px-2 py-1 bg-red-500/20 border border-red-500/40 rounded text-red-200 text-xs"
+                        >
+                            HIDE DEBUG
+                        </button>
                     </div>
-                    <button onClick={requestGyroPermission} className="mt-2 w-full bg-blue-600 py-1 rounded">
-                        Force Permission Request
-                    </button>
-                </div>
+
+                    <div className="absolute top-20 left-4 z-50 bg-black/80 text-white text-xs p-4 rounded border border-white/20 max-w-[300px]">
+                        <h3 className="font-bold border-b border-white/20 pb-1 mb-2">Diagnostics</h3>
+                        <p>Status: {debugInfo}</p>
+                        <p>Gyro Detected: {hasGyroscope ? "YES" : "NO"}</p>
+                        <p>Mode: {controlMode}</p>
+                        <p>VR Active: {isVR ? "YES" : "NO"}</p>
+                        <div className="mt-2 font-mono bg-white/5 p-2 rounded">
+                            A: {sensorData.alpha.toFixed(1)}<br />
+                            B: {sensorData.beta.toFixed(1)}<br />
+                            G: {sensorData.gamma.toFixed(1)}
+                        </div>
+                        <button onClick={requestGyroPermission} className="mt-2 w-full bg-blue-600 py-1 rounded">
+                            Force Permission Request
+                        </button>
+                    </div>
+                </>
             )}
 
             {/* VR Toggle Button */}

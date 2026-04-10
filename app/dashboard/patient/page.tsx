@@ -116,7 +116,7 @@ export default function PatientDashboard() {
     }));
 
     return (
-        <div className="min-h-screen bg-slate-950 p-8">
+        <div className="space-y-8">
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div>
@@ -237,7 +237,7 @@ export default function PatientDashboard() {
                                     ))}
                                     {sessions.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                            <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                                                 No sessions found. Start playing!
                                             </td>
                                         </tr>

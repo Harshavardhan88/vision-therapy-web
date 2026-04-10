@@ -55,13 +55,24 @@ export default function DoctorDashboard() {
         fetchPatients();
     }, []);
 
-    // ... existing code ...
     const handleAddPatient = async (e: React.FormEvent) => {
-        // ... (keep existing)
+        e.preventDefault();
+        try {
+            await auth.signup({
+                ...newPatient,
+                role: "patient"
+            });
+            setShowAddModal(false);
+            setNewPatient({ full_name: "", email: "", password: "password123", role: "patient" });
+            fetchPatients(); // Refresh the list
+        } catch (err: any) {
+            const detail = err.response?.data?.detail;
+            alert(typeof detail === 'string' ? detail : "Failed to create patient");
+        }
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 p-8 relative">
+        <div className="space-y-8 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div>

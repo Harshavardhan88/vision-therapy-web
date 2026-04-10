@@ -32,7 +32,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
 def get_patients_by_doctor(db: Session, doctor_id: int):
-    return db.query(models.User).join(models.PatientProfile).filter(
+    return db.query(models.User).join(models.PatientProfile, models.User.id == models.PatientProfile.user_id).filter(
         models.User.role == "patient",
         models.PatientProfile.doctor_id == doctor_id
     ).all()

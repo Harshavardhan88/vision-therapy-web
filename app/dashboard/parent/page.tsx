@@ -78,7 +78,7 @@ export default function ParentDashboard() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-8">
+        <div className="space-y-8 text-white">
             <header className="max-w-5xl mx-auto flex items-center justify-between mb-12">
                 <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">

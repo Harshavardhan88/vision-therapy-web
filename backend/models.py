@@ -67,7 +67,6 @@ class TherapySession(Base):
     start_time = Column(DateTime, default=datetime.utcnow)
     scheduled_date = Column(DateTime, nullable=True) # For Doctor scheduling
     end_time = Column(DateTime, nullable=True)
-    end_time = Column(DateTime, nullable=True)
     duration_seconds = Column(Integer, default=0)
     
     # Session Settings

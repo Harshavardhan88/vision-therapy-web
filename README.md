@@ -58,3 +58,28 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Android App (Capacitor Wrapper)
+
+This repository includes an Android shell under `android/` that loads the web app URL inside a native app.
+
+### Prerequisites
+- Android Studio with Android SDK installed
+- Java 17+ (Java 21 is fine)
+
+### Build and Sync Android Project
+```bash
+npm run android:sync
+```
+
+### Open in Android Studio
+```bash
+npm run android:open
+```
+
+Default Android web URL is `http://10.0.2.2:3000` (Android emulator -> host machine).
+
+For a physical device, re-sync using your machine LAN IP:
+```bash
+set CAP_SERVER_URL=http://<YOUR_LAN_IP>:3000 && npm run android:sync
+```

@@ -83,7 +83,7 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen relative flex flex-col items-center justify-center p-4">
-            <Card className="w-full max-w-md glass-panel border-0 animate-bounce-subtle animate-glow-pulse transition-transform duration-500 hover:scale-[1.02]">
+            <Card className="w-full max-w-md glass-panel border-0 animate-glow-pulse transition-transform duration-500 hover:scale-[1.02]">
                 <CardHeader className="flex flex-col items-center text-center">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center mb-4">
                         <Eye className="w-7 h-7 text-white" />

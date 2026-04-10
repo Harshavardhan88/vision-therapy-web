@@ -14,6 +14,7 @@ node_modules/
 # Production
 /build
 dist/
+/dist-capacitor/
 
 # Misc
 .DS_Store
@@ -61,3 +62,6 @@ vision_therapy.db
 # OS
 .DS_Store
 Thumbs.db
+
+# Android
+/android/local.properties

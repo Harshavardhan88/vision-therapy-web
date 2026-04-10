@@ -3,13 +3,24 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Gamepad2, User, LogOut, Menu, X, Activity } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+const patientNavItems = [
     { href: "/dashboard/patient", label: "Overview", icon: LayoutDashboard },
     { href: "/therapy", label: "Therapy Room", icon: Gamepad2 },
+    { href: "/profile", label: "Profile", icon: User },
+];
+
+const doctorNavItems = [
+    { href: "/dashboard/doctor", label: "Clinical Dashboard", icon: LayoutDashboard },
+    { href: "/profile", label: "Profile", icon: User },
+];
+
+const parentNavItems = [
+    { href: "/dashboard/parent", label: "Parent View", icon: LayoutDashboard },
+    { href: "/therapy", label: "Child View", icon: Gamepad2 },
     { href: "/profile", label: "Profile", icon: User },
 ];
 
@@ -17,11 +28,21 @@ export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        setRole(localStorage.getItem("userRole"));
+    }, []);
+
+    const navItems = role === 'doctor' ? doctorNavItems 
+                   : role === 'parent' ? parentNavItems 
+                   : patientNavItems;
 
     const handleLogout = () => {
         // Clear auth data
         document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
         localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
         router.push("/login");
     };
 

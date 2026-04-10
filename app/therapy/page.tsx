@@ -144,7 +144,7 @@ export default function TherapyPage() {
         }
     }, [score, playerStats, unlockedAchievementIds, difficulty]);
 
-    const handleGameSelect = (game: "space" | "balloon" | "neural") => {
+    const handleGameSelect = (game: "space" | "balloon" | "neural" | "quiz") => {
         setSelectedGame(game);
         setSessionStart(new Date());
         setScore(0);
@@ -234,7 +234,6 @@ export default function TherapyPage() {
 
 
 
-    // ... existing imports ...
 
     // Game Selection UI
     if (!selectedGame || ((selectedGame === 'quiz' || selectedGame === 'balloon') && !settingsConfirmed)) {
@@ -331,7 +330,7 @@ export default function TherapyPage() {
 
                             {/* Cosmic Quiz Card */}
                             <button
-                                onClick={() => handleGameSelect("quiz" as any)}
+                                onClick={() => handleGameSelect("quiz")}
                                 className="group relative h-80 bg-slate-900 rounded-2xl border border-purple-500/30 overflow-hidden hover:border-purple-400 transition-all hover:scale-105"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent" />

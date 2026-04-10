@@ -35,12 +35,13 @@ export default function LoginPage() {
 
             if (response.data.access_token) {
                 const token = response.data.access_token;
+                const role = response.data.role; // Extract role
                 localStorage.setItem("token", token);
+                localStorage.setItem("userRole", role); // Save role for Sidebar
                 // Set cookie for Middleware (Effective for 7 days)
                 document.cookie = `auth_token=${token}; path=/; max-age=604800; SameSite=Lax`;
 
                 // Redirect based on role
-                const role = response.data.role;
                 if (role === 'doctor') {
                     router.push("/dashboard/doctor");
                 } else if (role === 'parent') {
@@ -66,8 +67,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen relative flex flex-col items-center justify-center p-4">
-            {/* Floating Background Elements were handled globally, but let's make the card float too */}
-            <Card className="w-full max-w-md glass-panel border-0 animate-bounce-subtle animate-glow-pulse transition-transform duration-500 hover:scale-[1.02]">
+            <Card className="w-full max-w-md glass-panel border-0 animate-glow-pulse transition-transform duration-500 hover:scale-[1.02]">
                 <CardHeader className="flex flex-col items-center text-center">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center mb-4">
                         <Eye className="w-7 h-7 text-white" />
@@ -118,8 +118,15 @@ export default function LoginPage() {
                             🧪 Try Demo Mode (Skip Login)
                         </Button>
                     </div>
+
+                    <div className="mt-6 text-center text-sm text-slate-500">
+                        Don&apos;t have an account?{" "}
+                        <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium">
+                            Sign Up
+                        </Link>
+                    </div>
                 </CardContent>
             </Card>
-        </div >
+        </div>
     );
 }

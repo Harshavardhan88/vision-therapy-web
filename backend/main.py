@@ -51,7 +51,7 @@ app.add_middleware(
 @app.middleware("http")
 async def add_security_headers(request, call_next):
     response = await call_next(request)
-    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' ws: wss: http://localhost:*; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com"
     response.headers["X-Frame-Options"] = "DENY"
     return response
 
@@ -147,7 +147,7 @@ def create_user(
     new_user = crud.create_user(db=db, user=user)
     
     # Auto-provision profile based on role
-    if user.role == "patient" or user.role == "patient": # Handle string/enum potential mismatch
+    if user.role == "patient" or user.role == models.UserRole.PATIENT:
         # Check if created by a doctor (override request body)
         doctor_id = None
         if user.doctor_id:
