@@ -19,6 +19,8 @@ dist/
 # Misc
 .DS_Store
 *.pem
+.gemini/
+.gemini
 
 # Debug & Logs
 npm-debug.log*
