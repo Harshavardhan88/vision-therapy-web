@@ -20,10 +20,14 @@ dist/
 .DS_Store
 *.pem
 
-# Debug
+# Debug & Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+*.tsbuildinfo
+test_results*.json
+test_run*.json
 
 # Local env files
 .env
